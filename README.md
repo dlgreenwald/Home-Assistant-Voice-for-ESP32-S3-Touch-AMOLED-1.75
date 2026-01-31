@@ -14,6 +14,7 @@ This repo exists because **there was no complete, working YAML for this device**
 - ✅ Visual feedback for listening / thinking / replying
 - ✅ Timers with on-screen progress
 - ✅ Fully local (ESPHome + Home Assistant)
+- ✅ Media Streaming (Music Assistant)
 
 ---
 
@@ -30,7 +31,7 @@ Tested with:
 ---
 
 ## 🚀 Quick Start (5 minutes)
-1. Install **ESPHome 2024.6.0 or newer**
+1. Install **ESPHome 2026.1.0 or newer**
 2. Copy the YAML file from this repo
 3. Create a `secrets.yaml`:
    ```yaml
@@ -72,6 +73,15 @@ PRs welcome for:
 - Different ESP32-S3 boards
 - Cleanup / modularization
 - Docs and diagrams
+
+---
+
+## Citations
+
+This project would not be possible without the work done by others, and largely pulls together and reuses components from the original author of this repo, and the following pages/repos.  Special thanks to the Respeaker work as it provided the soultion to media streaming.
+https://devices.esphome.io/devices/waveshare-esp32-s3-touch-amoled-1.75/
+https://github.com/esphome/wake-word-voice-assistants/blob/main/esp32-s3-box-3/esp32-s3-box-3.yaml
+https://github.com/formatBCE/Respeaker-Lite-ESPHome-integration/blob/main/config/common/respeaker-satellite-base.yaml
 
 ---
 
