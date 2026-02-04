@@ -1,3 +1,21 @@
+# ···············································································································································
+# :                                                                                                                                             :
+# :      _   _                           _            _     _              _    __     __    _                                                  :
+# :     | | | | ___  _ __ ___   ___     / \   ___ ___(_)___| |_ __ _ _ __ | |_  \ \   / /__ (_) ___ ___                                         :
+# :     | |_| |/ _ \| '_ ` _ \ / _ \   / _ \ / __/ __| / __| __/ _` | '_ \| __|  \ \ / / _ \| |/ __/ _ \                                        :
+# :     |  _  | (_) | | | | | |  __/  / ___ \\__ \__ \ \__ \ || (_| | | | | |_    \ V / (_) | | (_|  __/                                        :
+# :     |_|_|_|\___/|_| |_| |_|\___| /_/   \_\___/___/_|___/\__\__,_|_| |_|\__|    \_/ \___/|_|\___\___|                                        :
+# :      / _| ___  _ __                                                                                                                         :
+# :     | |_ / _ \| '__|                                                                                                                        :
+# :     |  _| (_) | |                                                                                                                           :
+# :     |_|__\___/|_|____ _________      ____ _____   _____                _          _    __  __  ___  _     _____ ____    _  _____ ____       :
+# :     | ____/ ___||  _ \___ /___ \    / ___|___ /  |_   _|__  _   _  ___| |__      / \  |  \/  |/ _ \| |   | ____|  _ \  / ||___  | ___|      :
+# :     |  _| \___ \| |_) ||_ \ __) |___\___ \ |_ \    | |/ _ \| | | |/ __| '_ \    / _ \ | |\/| | | | | |   |  _| | | | | | |   / /|___ \      :
+# :     | |___ ___) |  __/___) / __/_____|__) |__) |   | | (_) | |_| | (__| | | |  / ___ \| |  | | |_| | |___| |___| |_| | | |_ / /  ___) |     :
+# :     |_____|____/|_|  |____/_____|   |____/____/    |_|\___/ \__,_|\___|_| |_| /_/   \_\_|  |_|\___/|_____|_____|____/  |_(_)_/  |____/      :
+# :                                                                                                                                             :
+# ···············································································································································
+
 substitutions:
   name: "waveshare-s3-amoled-175"
   friendly_name: "Waveshare-S3-AMOLED-1.75in"
@@ -31,6 +49,19 @@ substitutions:
   factory_reset_confirmed_sound_file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/factory_reset_confirmed.mp3
   error_cloud_expired_sound_file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/error_cloud_expired.mp3
 
+
+  # No Wifi
+  voice_assist_noWifi_phase_id: '65'
+  # No HA Connection
+  voice_assist_noHA_phase_id: '66'
+  # No VA Connection
+  voice_assist_noVA_phase_id: '67'
+  # Anouncing
+  voice_assist_anouncing_phase_id: '68'
+  # Playing
+  voice_assist_playing_phase_id: '69'
+  # Touch Interacting
+  voice_assist_touchsession_phase_id: '70'
   # The voice assistant is ready to be triggered by a wake word
   voice_assist_idle_phase_id: '1'
   # The voice assistant is waiting for a voice command (after being triggered by the wake word)
@@ -49,11 +80,27 @@ substitutions:
   font_family: Figtree
   font_glyphsets: GF_Latin_Core
 
+# ············································································
+# :                                                                          :
+# :      _   _               _                                               :
+# :     | | | | __ _ _ __ __| |_      ____ _ _ __ ___                        :
+# :     | |_| |/ _` | '__/ _` \ \ /\ / / _` | '__/ _ \                       :
+# :     |  _  | (_| | | | (_| |\ V  V / (_| | | |  __/                       :
+# :     |_| |_|\__,_|_|  \__,_| \_/\_/ \__,_|_|  \___|                       :
+# :       ____             __ _                       _   _                  :
+# :      / ___|___  _ __  / _(_) __ _ _   _ _ __ __ _| |_(_) ___  _ __       :
+# :     | |   / _ \| '_ \| |_| |/ _` | | | | '__/ _` | __| |/ _ \| '_ \      :
+# :     | |__| (_) | | | |  _| | (_| | |_| | | | (_| | |_| | (_) | | | |     :
+# :      \____\___/|_| |_|_| |_|\__, |\__,_|_|  \__,_|\__|_|\___/|_| |_|     :
+# :                             |___/                                        :
+# :                                                                          :
+# ············································································
+
 esphome:
   name: "${name}"
   friendly_name: "${friendly_name}"
-  min_version: 2026.1.0
-  name_add_mac_suffix: false
+  min_version: 2025.5.1
+  #name_add_mac_suffix: true
   platformio_options:
     board_build.flash_mode: dio
     board_build.f_flash: 80000000L
@@ -66,10 +113,11 @@ esphome:
         - sensor.template.publish:
             id: next_timer
             state: -1
-        # Run the script to refresh the LED status
+        # Run the script to draw the screen 
+        - lambda: id(voice_assistant_phase) = ${voice_assist_noWifi_phase_id};
         - script.execute: draw_display
         # If after 10 minutes, the device is still initializing (It did not yet connect to Home Assistant), turn off the init_in_progress variable and run the script to refresh the LED status
-        - delay: 10min
+        - delay: 1min
         - if:
             condition:
               lambda: return id(init_in_progress);
@@ -88,8 +136,10 @@ esphome:
             setenv("TZ", id(saved_time_zone).c_str(), 1);
             tzset();
 
+
 esp32:
-  #board: esp32-s3-devkitc-1
+  board: esp32-s3-devkitc-1
+  cpu_frequency: 240MHz
   variant: esp32s3
   flash_size: 16MB
   framework:
@@ -99,6 +149,8 @@ esp32:
       CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
       CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+
+      CONFIG_COMPILER_OPTIMIZATION: "Performance"
 
       # Moves instructions and read only data from flash into PSRAM on boot.
       # Both enabled allows instructions to execute while a flash operation is in progress without needing to be placed in IRAM.
@@ -115,6 +167,48 @@ esp32:
 psram:
   mode: octal
   speed: 80MHz
+
+logger:
+  level: DEBUG
+  # initial_level: WARN
+  # logs:
+  #   micro_wake_word: DEBUG
+  #   media_player: DEBUG
+  #   microphone: DEBUG
+  #   speaker: DEBUG
+  #   voice_assistant: DEBUG
+#  hardware_uart: uart0  #Uncomment to see serial logs via USB connection. Comment out after debufgging - this line introduces noise on speaker...
+
+
+# ··································································
+# :                                                                :
+# :      _   _      _                      _    _                  :
+# :     | \ | | ___| |___      _____  _ __| | _(_)_ __   __ _      :
+# :     |  \| |/ _ \ __\ \ /\ / / _ \| '__| |/ / | '_ \ / _` |     :
+# :     | |\  |  __/ |_ \ V  V / (_) | |  |   <| | | | | (_| |     :
+# :     |_| \_|\___|\__| \_/\_/ \___/|_|  |_|\_\_|_| |_|\__, |     :
+# :                                                     |___/      :
+# :                                                                :
+# ··································································
+
+network:
+  enable_ipv6: true
+
+ota:
+  - platform: esphome
+    id: ota_esphome
+    # password: !secret ota_password
+
+wifi:
+  id: wifi_id
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "${name} Fallback"
+  on_connect: 
+    - lambda: id(voice_assistant_phase) = ${voice_assist_noHA_phase_id};
+
+captive_portal:
 
 api:
   id: api_id
@@ -145,312 +239,51 @@ api:
             tzset();
             id(saved_time_zone) = posix_time_zone;
             id(publish_current_time).execute();
-
-  on_client_connected:
-    - script.execute: draw_display
-  on_client_disconnected:
-    - script.execute: draw_display
   encryption:
-
-ota:
-  - platform: esphome
-    id: ota_esphome
-    password: !secret ota_password
-
-logger:
-  level: debug
-  initial_level: debug
-  logs:
-    sensor: WARN  # avoids logging debug sensor updates
-#  hardware_uart: uart0  #Uncomment to see serial logs via USB connection. Comment out after debufgging - this line introduces noise on speaker...
-
-wifi:
-  id: wifi_id
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  ap:
-    ssid: "${name} Fallback"
-  on_connect:
-    - lambda: id(improv_ble_in_progress) = false;
-    - script.execute: draw_display
-  on_disconnect:
-    - script.execute: draw_display
-
-network:
-  enable_ipv6: true
-
-http_request:
-# Uncomment this, if you have problems with text-to-speech because of Home Assistant HTTPS internal URL
-#   verify_ssl: false
+  on_client_connected:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_noVA_phase_id};
+  on_client_disconnected:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_noHA_phase_id};
 
 # Time sync from Home Assistant
 time:
   - platform: homeassistant
     id: homeassistant_time
     on_time:
-      # Every 1 minute
-      - seconds: 0
-        minutes: /1
+      - minutes: '*'
+        seconds: 0 
         then:
-          - script.execute: check_alarm
+          - script.execute: time_update
     on_time_sync:
       - script.execute: publish_current_time
 
-captive_portal:
+http_request:
+# Uncomment this, if you have problems with text-to-speech because of Home Assistant HTTPS internal URL
+#   verify_ssl: false
 
-button:
-  - platform: factory_reset
-    id: factory_reset_btn
-    name: "Factory Reset"
-    entity_category: diagnostic
-    internal: true
-
-  - platform: restart
-    id: restart_button
-    name: "Restart"
-    entity_category: config
-    disabled_by_default: true
-    icon: "mdi:restart"
-
-sensor:
-  - platform: template
-    id: next_timer
-    name: "Next timer"
-    update_interval: never
-    disabled_by_default: true
-    device_class: duration
-    unit_of_measurement: s
-    icon: "mdi:timer"
-
-event:
-  # Event entity exposed to the user to automate on complex center button presses.
-  # The simple press is not exposed as it is used to control the device itself.
-  - platform: template
-    id: button_press_event
-    name: "Button press"
-    icon: mdi:button-pointer
-    device_class: button
-    event_types:
-      - double_press
-      - triple_press
-      - long_press
-
-binary_sensor:
-# User Button. Used for many things (See on_multi_click)
-  - platform: touchscreen
-    id: user_button
-    name: "User button"
-    x_min: 0
-    x_max: 466
-    y_min: 0
-    y_max: 466
-    page_id: idle_page
-    on_press:
-      - script.execute: draw_display
-    on_release:
-      - script.execute: draw_display
-      # If a factory reset is requested, factory reset on release
-      - if:
-          condition:
-            lambda: return id(factory_reset_requested);
-          then:
-            - button.press: factory_reset_btn
-    on_multi_click:
-      # Simple Click:
-      #   - Abort "things" in order
-      #     - Timer
-      #     - Announcements
-      #     - Voice Assistant Pipeline run
-      #     - Music
-      #   - Starts the voice assistant if it is not yet running and if the device is not muted.
-      - timing:
-          - ON for at most 1s
-          - OFF for at least 0.25s
-        then:
-          - if:
-              condition:
-                lambda: return !id(init_in_progress);
-              then:
-                - if:
-                    condition:
-                      switch.is_on: timer_ringing
-                    then:
-                      - switch.turn_off: timer_ringing
-                    else:
-                      - if:
-                          condition:
-                            voice_assistant.is_running:
-                          then:
-                            - voice_assistant.stop:
-                          else:
-                            - if:
-                                condition:
-                                  media_player.is_announcing:
-                                    id: external_media_player
-                                then:
-                                  media_player.stop:
-                                    announcement: true
-                                    id: external_media_player
-                                else:
-                                  - if:
-                                      condition:
-                                        media_player.is_playing:
-                                          id: external_media_player
-                                      then:
-                                        - media_player.pause:
-                                            id: external_media_player
-                                      else:
-                                        - if:
-                                            condition:
-                                              and:
-                                                - switch.is_off: mic_mute_switch
-                                                - not:
-                                                    voice_assistant.is_running
-                                            then:
-                                              - if:
-                                                  condition:
-                                                    switch.is_on: button_sound
-                                                  then:
-                                                    - script.execute:
-                                                        id: play_sound
-                                                        priority: true
-                                                        sound_file: "center_button_press_sound"
-                                                    - delay: 300ms
-                                              - voice_assistant.start:
-      # Double Click
-      #  . Exposed as an event entity. To be used in automations inside Home Assistant
-      - timing:
-          - ON for at most 1s
-          - OFF for at most 0.25s
-          - ON for at most 1s
-          - OFF for at least 0.25s
-        then:
-          - if:
-              condition:
-                lambda: return !id(init_in_progress);
-              then:
-                - if:
-                    condition:
-                      switch.is_on: button_sound
-                    then:
-                      - script.execute:
-                          id: play_sound
-                          priority: false
-                          sound_file: "center_button_double_press_sound"
-                - event.trigger:
-                    id: button_press_event
-                    event_type: "double_press"
-      # Triple Click
-      #  . Exposed as an event entity. To be used in automations inside Home Assistant
-      - timing:
-          - ON for at most 1s
-          - OFF for at most 0.25s
-          - ON for at most 1s
-          - OFF for at most 0.25s
-          - ON for at most 1s
-          - OFF for at least 0.25s
-        then:
-          - if:
-              condition:
-                lambda: return !id(init_in_progress);
-              then:
-                - if:
-                    condition:
-                      switch.is_on: button_sound
-                    then:
-                      - script.execute:
-                          id: play_sound
-                          priority: false
-                          sound_file: "center_button_triple_press_sound"
-                - event.trigger:
-                    id: button_press_event
-                    event_type: "triple_press"
-      # Long Press
-      #  . Exposed as an event entity. To be used in automations inside Home Assistant
-      - timing:
-          - ON for at least 1s
-        then:
-          - if:
-              condition:
-                lambda: return !id(init_in_progress);
-              then:
-                - if:
-                    condition:
-                      switch.is_on: button_sound
-                    then:
-                      - script.execute:
-                          id: play_sound
-                          priority: false
-                          sound_file: "center_button_long_press_sound"
-                - event.trigger:
-                    id: button_press_event
-                    event_type: "long_press"
-      # Factory Reset Warning
-      #  . Audible and Visible warning.
-      - timing:
-          - ON for at least 10s
-        then:
-          - display.page.show: factory_reset_page
-          - component.update: main_display
-          - script.execute:
-              id: play_sound
-              priority: true
-              sound_file: "factory_reset_initiated_sound"
-          - wait_until:
-              binary_sensor.is_off: user_button
-          - if:
-              condition:
-                lambda: return !id(factory_reset_requested);
-              then:
-                - display.page.show: idle_page
-                - component.update: main_display
-                - script.execute:
-                    id: play_sound
-                    priority: true
-                    sound_file: "factory_reset_cancelled_sound"
-      # Factory Reset Confirmed.
-      #  . Audible warning to prompt user to release the button
-      #  . Set factory_reset_requested to true
-      - timing:
-          - ON for at least 22s
-        then:
-          - script.execute:
-              id: play_sound
-              priority: true
-              sound_file: "factory_reset_confirmed_sound"
-          - lambda: id(factory_reset_requested) = true;
+# ······················································
+# :                                                    :
+# :      _ ____           _             _ _            :
+# :     (_)___ \ ___     / \  _   _  __| (_) ___       :
+# :     | | __) / __|   / _ \| | | |/ _` | |/ _ \      :
+# :     | |/ __/ (__   / ___ \ |_| | (_| | | (_) |     :
+# :     |_|_____\___| /_/   \_\__,_|\__,_|_|\___/      :
+# :                                                    :
+# ······················································
 
 i2c:
   - id: bus_a
     scl: GPIO14
     sda: GPIO15
     scan: false
-    frequency: 400kHz
 
 i2s_audio:
-  - id: i2s_output
+  - id: i2s_audio_bus
     i2s_lrclk_pin: 
       number: GPIO45
       ignore_strapping_warning: true
-      allow_other_uses: true
-    i2s_bclk_pin: 
-      number: GPIO9
-      allow_other_uses: true
-    i2s_mclk_pin: 
-      number: GPIO42
-      allow_other_uses: true
-      
-  - id: i2s_input
-    i2s_lrclk_pin:  
-      number: GPIO45
-      allow_other_uses: true
-      ignore_strapping_warning: true
-    i2s_bclk_pin:  
-      number: GPIO9
-      allow_other_uses: true
-    i2s_mclk_pin:  
-      number: GPIO42
-      allow_other_uses: true
+    i2s_bclk_pin: GPIO9
+    i2s_mclk_pin: GPIO42
 
 audio_dac:
   - platform: es8311
@@ -471,8 +304,8 @@ audio_adc:
 
 microphone:
   - platform: i2s_audio
-    id: i2s_mics
-    i2s_audio_id: i2s_input
+    id: box_mic
+    i2s_audio_id: i2s_audio_bus
     sample_rate: 16000
     i2s_din_pin: GPIO10
     bits_per_sample: 16bit
@@ -481,167 +314,115 @@ microphone:
     use_apll: false  # Disable APLL to reduce I2S conflicts
 
 speaker:
+  - platform: i2s_audio
+    id: box_speaker
+    i2s_audio_id: i2s_audio_bus
+    dac_type: external
+    i2s_dout_pin: GPIO8
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    buffer_duration: 64ms
+    use_apll: false  # Disable APLL to reduce I2S conflicts
+
+  # Virtual speakers to resample each pipelines' audio, if necessary, as the mixer speaker requires the same sample rate
+  - platform: resampler
+    id: announcement_box_speaker
+    output_speaker: announcement_mixing_input
+    sample_rate: 16000
+    bits_per_sample: 16
+    num_channels: 2
+
+  - platform: resampler
+    id: media_box_speaker
+    output_speaker: media_mixing_input
+    sample_rate: 16000
+    bits_per_sample: 16
+    num_channels: 2
+
+  - platform: resampler
+    id: sendspin_box_speaker
+    output_speaker: sendspin_mixing_input
+    sample_rate: 16000
+    bits_per_sample: 16
+    num_channels: 2
+
   - platform: mixer
     id: mixing_speaker
-    output_speaker: i2s_audio_speaker
+    output_speaker: box_speaker
     source_speakers:
       - id: announcement_mixing_input
         timeout: never
       - id: media_mixing_input
         timeout: never
+      - id: sendspin_mixing_input
+        timeout: never
 
-  # Virtual speakers to resample each pipelines' audio, if necessary, as the mixer speaker requires the same sample rate
-  - platform: resampler
-    id: announcement_resampling_speaker
-    output_speaker: announcement_mixing_input
-    sample_rate: 48000
-    bits_per_sample: 16
-  - platform: resampler
-    id: media_resampling_speaker
-    output_speaker: media_mixing_input
-    sample_rate: 48000
-    bits_per_sample: 16
 
-  - platform: i2s_audio
-    id: i2s_audio_speaker
-    i2s_audio_id: i2s_output
-    dac_type: external
-    i2s_dout_pin: GPIO8
-    sample_rate: 48000
-    bits_per_sample: 16bit
-    buffer_duration: 100ms
-    use_apll: false  # Disable APLL to reduce I2S conflicts
-    timeout: never
 
-sendspin:
-  id: sendspin_hub
-  task_stack_in_psram: true
-  kalman_process_error: 0.01
 
-media_player:
-  - platform: sendspin
-    id: sendspin_group_media_player
-  - platform: speaker_source
-    id: external_media_player
-    name: Media Player
-    announcement_speaker: announcement_resampling_speaker
-    media_speaker: media_resampling_speaker
-    announcement_pipeline:
-      format: FLAC     # FLAC is the least processor intensive codec
-      num_channels: 1  # Stereo audio is unnecessary for announcements
-      sample_rate: 48000
-    media_pipeline:
-      format: FLAC     # FLAC is the least processor intensive codec
-      num_channels: 2
-      sample_rate: 48000
-    volume_increment: 0.05
-    volume_min: 0.4
-    volume_max: 0.85
-    sources:
-      - file_source
-      - http_source
-      - sendspin_source
-    on_announcement:
-      - delay: 100ms  # Give I2S bus time to stabilize
-      - mixer_speaker.apply_ducking:
-          id: media_mixing_input
-          decibel_reduction: 20
-          duration: 0.0s
-    on_state:
-      if:
-        condition:
-          and:
-            - switch.is_off: timer_ringing
-            - not:
-                voice_assistant.is_running:
-            - not:
-                media_player.is_announcing: external_media_player
-        then:
-          - mixer_speaker.apply_ducking:
-              id: media_mixing_input
-              decibel_reduction: 0
-              duration: 1.0s 
+# ································································
+# :   ____  _           _               _                        :
+# :  |  _ \(_)___ _ __ | | __ _ _   _  | |    ___   ___  _ __    :
+# :  | | | | / __| '_ \| |/ _` | | | | | |   / _ \ / _ \| '_ \   :
+# :  | |_| | \__ \ |_) | | (_| | |_| | | |__| (_) | (_) | |_) |  :
+# :  |____/|_|___/ .__/|_|\__,_|\__, | |_____\___/ \___/| .__/   :
+# :              |_|            |___/                   |_|      :
+# ································································
+interval:
+  # Tight intervel to make responsive.  Return ASAP if no work.
+  - interval: .5s
+    then:
+      # Check if the current phase is not equal to the previous runs phase.
+      - if: 
+          condition:
+            lambda: return (id(previous_phase)!=id(voice_assistant_phase));
+          then:
+            - logger.log:
+                format: STATE CHANGED FROM %d TO %d
+                args: [id(previous_phase), id(voice_assistant_phase)]
+                level: info
+            - script.execute: draw_display
+            - lambda: id(previous_phase) = id(voice_assistant_phase);
+
+# ···················································································
+# :                                                                                 :
+# :     __     __    _               _                _     _              _        :
+# :     \ \   / /__ (_) ___ ___     / \   ___ ___ ___(_)___| |_ __ _ _ __ | |_      :
+# :      \ \ / / _ \| |/ __/ _ \   / _ \ / __/ __/ __| / __| __/ _` | '_ \| __|     :
+# :       \ V / (_) | | (_|  __/  / ___ \\__ \__ \__ \ \__ \ || (_| | | | | |_      :
+# :        \_/ \___/|_|\___\___| /_/   \_\___/___/___/_|___/\__\__,_|_| |_|\__|     :
+# :                                                                                 :
+# ···················································································
 
 micro_wake_word:
   id: mww
-  microphone:
-    microphone: i2s_mics
-    gain_factor: 4
-  stop_after_detection: false
   models:
     - okay_nabu
-    - model: https://github.com/kahrendt/microWakeWord/releases/download/stop/stop.json
-      id: stop
-      internal: true
-  vad:
-    probability_cutoff: 0.05
   on_wake_word_detected:
-    # If the wake word is detected when the device is muted (Possible with the software mute switch): Do nothing
     - if:
         condition:
-          switch.is_off: mic_mute_switch
+          switch.is_on: wake_sound
         then:
-          # If a timer is ringing: Stop it, do not start the voice assistant (We can stop timer from voice!)
-          - if:
-              condition:
-                switch.is_on: timer_ringing
-              then:
-                - switch.turn_off: timer_ringing
-              # Stop voice assistant if running
-              else:
-                - if:
-                    condition:
-                      voice_assistant.is_running:
-                    then:
-                      voice_assistant.stop:
-                    # Stop any other media player announcement
-                    else:
-                      - if:
-                          condition:
-                            media_player.is_announcing:
-                              id: external_media_player
-                          then:
-                            - media_player.stop:
-                                announcement: true
-                                id: external_media_player
-                          # Start the voice assistant and play the wake sound, if enabled
-                          else:
-                            - if:
-                                condition:
-                                  switch.is_on: wake_sound
-                                then:
-                                  - script.execute:
-                                      id: play_sound
-                                      priority: true
-                                      sound_file: "wake_word_triggered_sound"
-                                  - delay: 300ms
-                            - voice_assistant.start:
-                                wake_word: !lambda return wake_word;
+          - media_player.speaker.play_on_device_media_file:
+              media_file: wake_word_triggered_sound
+          - delay: 300ms
+    - voice_assistant.start:
+        wake_word: !lambda return wake_word;
 
 voice_assistant:
   id: va
-  microphone: i2s_mics
+  microphone: box_mic
   media_player: external_media_player
   micro_wake_word: mww
-  use_wake_word: false
   noise_suppression_level: 2
   auto_gain: 31dBFS
-  volume_multiplier: 0.3
+  volume_multiplier: 0.3  # Significantly reduced to prevent I2S conflicts
   on_client_connected:
-    - if:
-        condition:
-          - lambda: return id(init_in_progress);
-          - switch.is_on: mic_mute_switch
-        then:
-          - switch.turn_off: mic_mute_switch
+    - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
     - lambda: id(init_in_progress) = false;
     - micro_wake_word.start:
-    - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
-    - script.execute: draw_display
   on_client_disconnected:
-    - voice_assistant.stop:
-    - lambda: id(voice_assistant_phase) = ${voice_assist_not_ready_phase_id};
-    - script.execute: draw_display
+    - micro_wake_word.stop:
   on_error:
     # Only set the error phase if the error code is different than duplicate_wake_up_detected or stt-no-text-recognized
     # These two are ignored for a better user experience
@@ -653,31 +434,18 @@ voice_assistant:
             - lambda: return code != "stt-no-text-recognized";
         then:
           - lambda: id(voice_assistant_phase) = ${voice_assist_error_phase_id};
-          - script.execute: draw_display
-    # If the error code is cloud-auth-failed, serve a local audio file guiding the user.
-    - if:
-        condition:
-          - lambda: return code == "cloud-auth-failed";
-        then:
-          - script.execute:
-              id: play_sound
-              priority: true
-              sound_file: "error_cloud_expired"
-  # When the voice assistant starts: Play a wake up sound, duck audio.
-  on_start:
+    - micro_wake_word.start:
+  on_start: 
     - mixer_speaker.apply_ducking:
         id: media_mixing_input
         decibel_reduction: 20  # Number of dB quieter; higher implies more quiet, 0 implies full volume
         duration: 0.0s  # The duration of the transition (default is no transition)
-  on_listening:
+  on_listening: 
     - lambda: id(voice_assistant_phase) = ${voice_assist_waiting_for_command_phase_id};
-    - script.execute: draw_display
-  on_stt_vad_start:
-    - lambda: id(voice_assistant_phase) = ${voice_assist_listening_for_command_phase_id};
-    - script.execute: draw_display
-  on_stt_vad_end:
+  on_stt_vad_start: 
     - lambda: id(voice_assistant_phase) = ${voice_assist_thinking_phase_id};
-    - script.execute: draw_display
+  on_stt_vad_end: 
+    - lambda: id(voice_assistant_phase) = ${voice_assist_thinking_phase_id};
   on_intent_progress:
     - if:
         condition:
@@ -685,9 +453,6 @@ voice_assistant:
           lambda: 'return !x.empty();'
         then:
           - lambda: id(voice_assistant_phase) = ${voice_assist_replying_phase_id};
-          - script.execute: draw_display
-          # Start a script that would potentially enable the stop word if the response is longer than a second
-          - script.execute: activate_stop_word_once
   on_tts_start:
     - if:
         condition:
@@ -695,447 +460,361 @@ voice_assistant:
           lambda: 'return id(voice_assistant_phase) != ${voice_assist_replying_phase_id};'
         then:
           - lambda: id(voice_assistant_phase) = ${voice_assist_replying_phase_id};
-          - script.execute: draw_display
-          # Start a script that would potentially enable the stop word if the response is longer than a second
-          - script.execute: activate_stop_word_once
-  on_tts_end:
-    - script.execute:
-        id: send_tts_uri_event
-        tts_uri: !lambda 'return x;'
-  on_stt_end:
-    - script.execute:
-        id: send_stt_text_event
-        stt_text: !lambda 'return x;'
-    
-  # When the voice assistant ends ...
   on_end:
-    - wait_until:
-        not:
-          voice_assistant.is_running:
     # Stop ducking audio.
     - mixer_speaker.apply_ducking:
         id: media_mixing_input
         decibel_reduction: 0
-        duration: 1.0s
-    # If the end happened because of an error, let the error phase on for a second
-    - if:
-        condition:
-          lambda: return id(voice_assistant_phase) == ${voice_assist_error_phase_id};
-        then:
-          - delay: 1s
-    # Reset the voice assistant phase id and reset the LED animations.
+        duration: 0.0s
     - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
-    - script.execute: draw_display
   on_timer_finished:
     - switch.turn_on: timer_ringing
     - lambda: |
         id(next_timer).publish_state(-1);
         id(next_timer_name).publish_state("-");
   on_timer_started:
-    - script.execute: draw_display
     - lambda: |
         id(next_timer).publish_state(id(first_active_timer).seconds_left);
         id(next_timer_name).publish_state(id(first_active_timer).name);
   on_timer_cancelled:
-    - script.execute: draw_display
     - lambda: |
         id(next_timer).publish_state(id(first_active_timer).seconds_left);
         id(next_timer_name).publish_state(id(first_active_timer).name);
   on_timer_updated:
-    - script.execute: draw_display
     - lambda: |
         id(next_timer).publish_state(id(first_active_timer).seconds_left);
         id(next_timer_name).publish_state(id(first_active_timer).name);
   on_timer_tick:
-    - script.execute: draw_display
     - lambda: | 
         int seconds_left = id(first_active_timer).seconds_left;
         if (std::abs(seconds_left) % 5 == 0) {
           id(next_timer).publish_state(seconds_left); 
         }
 
-script:
-  - id: draw_display
-    then:
-      - lambda: |
-          id(check_if_timers_active).execute();
-          if (id(is_timer_active)){
-            id(fetch_first_active_timer).execute();
-          }
-          if (id(improv_ble_in_progress)) {
-            id(draw_display_improv_ble_state).execute();
-          } else if (id(init_in_progress)) {
-            id(draw_display_init_state).execute();
-          } else if (!id(wifi_id).is_connected() || !id(api_id).is_connected()){
-            id(draw_display_no_ha_connection_state).execute();
-          } else if (id(user_button).state) {
-            id(draw_display_center_button_touched).execute();
-          } else if (id(timer_ringing).state) {
-            id(draw_display_timer_ringing).execute();
-          } else if (id(voice_assistant_phase) == ${voice_assist_waiting_for_command_phase_id}) {
-            id(draw_display_voice_assistant_waiting_for_command_phase).execute();
-          } else if (id(voice_assistant_phase) == ${voice_assist_listening_for_command_phase_id}) {
-            id(draw_display_voice_assistant_listening_for_command_phase).execute();
-          } else if (id(voice_assistant_phase) == ${voice_assist_thinking_phase_id}) {
-            id(draw_display_voice_assistant_thinking_phase).execute();
-          } else if (id(voice_assistant_phase) == ${voice_assist_replying_phase_id}) {
-            id(draw_display_voice_assistant_replying_phase).execute();
-          } else if (id(voice_assistant_phase) == ${voice_assist_error_phase_id}) {
-            id(draw_display_voice_assistant_error_phase).execute();
-          } else if (id(voice_assistant_phase) == ${voice_assist_not_ready_phase_id}) {
-            id(draw_display_voice_assistant_not_ready_phase).execute();
-          } else if (id(is_timer_active)) {
-            id(draw_display_timer_ticking).execute();
-          } else if (id(alarm_on).state) {
-            id(draw_display_alarm_active).execute();
-          } else if (id(voice_assistant_phase) == ${voice_assist_idle_phase_id}) {
-            id(draw_display_voice_assistant_idle_phase).execute();
-          }
+# ·······································································
+# :                                                                     :
+# :      __  __          _ _         ____  _                            :
+# :     |  \/  | ___  __| (_) __ _  |  _ \| | __ _ _   _  ___ _ __      :
+# :     | |\/| |/ _ \/ _` | |/ _` | | |_) | |/ _` | | | |/ _ \ '__|     :
+# :     | |  | |  __/ (_| | | (_| | |  __/| | (_| | |_| |  __/ |        :
+# :     |_|  |_|\___|\__,_|_|\__,_| |_|   |_|\__,_|\__, |\___|_|        :
+# :                                                |___/                :
+# :                                                                     :
+# ·······································································
 
-    # Script executed during Improv BLE
-  # Warm White slow pulse
-  - id: draw_display_improv_ble_state
-    then:
-      - display.page.show: initializing_page
-      - component.update: main_display
-
-  # Script executed during initialization
-  # Fast Blue pulse if Wifi is connected, Else slow blue pulse
-  - id: draw_display_init_state
-    then:
+media_player:
+  - platform: speaker
+    name: None
+    id: external_media_player
+    announcement_pipeline:
+      speaker: announcement_box_speaker
+      format: FLAC
+      sample_rate: 16000
+      num_channels: 1
+    media_pipeline:
+      speaker: media_box_speaker
+      format: FLAC     # FLAC is the least processor intensive codec
+      num_channels: 2
+      sample_rate: 48000
+    files:
+      - id: wake_word_triggered_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/wake_word_triggered.flac
+    on_announcement:
+      - delay: 100ms  # Give I2S bus time to stabilize
       - if:
           condition:
-            wifi.connected:
+            microphone.is_capturing:
           then:
-            - display.page.show: no_ha_page
-            - component.update: main_display
-          else:
-            - display.page.show: no_wifi_page
-            - component.update: main_display
-
-  # Script executed when the device has no connection to Home Assistant
-  # Red slow pulse (This will be visible during HA updates for example)
-  - id: draw_display_no_ha_connection_state
-    then:
-      - display.page.show: no_ha_page
-      - component.update: main_display
-
-  # Script executed when the center button is touched
-  # The LED turns on blue
-  - id: draw_display_center_button_touched
-    then:
-      - display.page.show: touch_page
-      - component.update: main_display
-
-  # Script executed when the timer is ringing, to control the LEDs
-  # The LED blinks green.
-  - id: draw_display_timer_ringing
-    then:
-      - display.page.show: timer_finished_page
-      - component.update: main_display
-
-  # Script executed when the timer is ticking, to control the LEDs
-  # Slow dim while pulse.
-  # Need to create a page for this
-  - id: draw_display_timer_ticking
-    then:
-
-  # Script executed when the alarm is active
-  # The LED turns on dim green
-  # Page needs created for this
-  - id: draw_display_alarm_active
-    then:
-
-  # Script executed when the voice assistant is idle (waiting for a wake word)
-  # Display Idle Page
-  - id: draw_display_voice_assistant_idle_phase
-    then:
-      - display.page.show: idle_page
-      - component.update: main_display
-
-  # Script executed when the voice assistant is waiting for a command (After the wake word)
-  # Display Listening Page
-  - id: draw_display_voice_assistant_waiting_for_command_phase
-    then:
-      - display.page.show: listening_page
-      - component.update: main_display
-
-  # Script executed when the voice assistant is listening to a command
-  # Display Listening Page
-  - id: draw_display_voice_assistant_listening_for_command_phase
-    then:
-      - display.page.show: listening_page
-      - component.update: main_display
-
-  # Script executed when the voice assistant is thinking to a command
-  # Fast purple pulse
-  - id: draw_display_voice_assistant_thinking_phase
-    then:
-      - display.page.show: thinking_page
-      - component.update: main_display
-
-  # Script executed when the voice assistant is replying to a command
-  # Slow cyan pulse
-  - id: draw_display_voice_assistant_replying_phase
-    then:
-      - display.page.show: replying_page
-      - component.update: main_display
-
-  # Script executed when the voice assistant is in error
-  # Fast Red Pulse
-  - id: draw_display_voice_assistant_error_phase
-    then:
-      - display.page.show: error_page
-      - component.update: main_display
-
-  # Script executed when the voice assistant is not ready
-  - id: draw_display_voice_assistant_not_ready_phase
-    then:
-      - display.page.show: not_ready_page
-      - component.update: main_display
-
-  - id: fetch_first_active_timer
-    then:
-      - lambda: |
-          const auto timers = id(va).get_timers();
-          if (timers.empty()) return;
-          auto output_timer = timers.begin()->second;
-          for (auto &iterable_timer : timers) {
-            if (iterable_timer.second.is_active && iterable_timer.second.seconds_left <= output_timer.seconds_left) {
-              output_timer = iterable_timer.second;
-            }
-          }
-          id(global_first_active_timer) = output_timer;
-
-  # Script used activate the stop word if the TTS step is long.
-  # Why is this wrapped on a script?
-  #   Becasue we want to stop the sequence if the TTS step is faster than that.
-  #   This allows us to prevent having the deactivation of the stop word before its own activation.
-  - id: activate_stop_word_once
-    then:
-      - wait_until:
-          condition:
-            media_player.is_announcing:
-              id: external_media_player
-      - delay: 1s
-      # Enable stop wake word
+            - delay: 300ms
+            - micro_wake_word.stop:
+            - delay: 300ms  # Wait for microphone to fully stop
+    on_play: 
+      - micro_wake_word.stop: 
+    on_idle:
+      - logger.log:
+          format: "Media Player Done"
+          level: info
+      - delay: 500ms  # Extended delay for I2S bus stability
       - if:
           condition:
-            switch.is_off: timer_ringing
+            not:
+              voice_assistant.is_running:
           then:
-            - micro_wake_word.enable_model: stop
-            - wait_until:
-                not:
-                  media_player.is_announcing:
-                    id: external_media_player
-            - if:
-                condition:
-                  switch.is_off: timer_ringing
-                then:
-                  - micro_wake_word.disable_model: stop
+            - micro_wake_word.start
 
-  - id: check_if_timers_active
-    then:
-      - lambda: |
-          const auto timers = id(va).get_timers();
-          bool output = false;
-          if (timers.size() > 0) {
-            for (auto &iterable_timer : timers) {
-              if(iterable_timer.second.is_active) {
-                output = true;
-              }
-            }
-          }
-          id(global_is_timer_active) = output;
-  - id: fetch_first_timer
-    then:
-      - lambda: |
-          const auto timers = id(va).get_timers();
-          if (timers.empty()) return;
-          auto output_timer = timers.begin()->second;
-          for (auto &iterable_timer : timers) {
-            if (iterable_timer.second.seconds_left <= output_timer.seconds_left) {
-              output_timer = iterable_timer.second;
-            }
-          }
-          id(global_first_timer) = output_timer;
-  
-  - id: check_if_timers
-    then:
-      - lambda: |
-          const auto timers = id(va).get_timers();
-          bool output = false;
-          if (timers.size() > 0) {
-            output = true;
-          }
-          id(global_is_timer) = output;
+# ·······························································
+# :   ____                                                      :
+# :  / ___|  ___ _ __ ___  ___ _ __                             :
+# :  \___ \ / __| '__/ _ \/ _ \ '_ \                            :
+# :   ___) | (__| | |  __/  __/ | | |                           :
+# :  |____/ \___|_|  \___|\___|_| |_|                           :
+# :    __ _ _ __   __| |                                        :
+# :   / _` | '_ \ / _` |                                        :
+# :  | (_| | | | | (_| |                                        :
+# :   \__,_|_| |_|\__,_|                                        :
+# :   _____                _                                    :
+# :  |_   _|__  _   _  ___| |__  ___  ___ _ __ ___  ___ _ __    :
+# :    | |/ _ \| | | |/ __| '_ \/ __|/ __| '__/ _ \/ _ \ '_ \   :
+# :    | | (_) | |_| | (__| | | \__ \ (__| | |  __/  __/ | | |  :
+# :    |_|\___/ \__,_|\___|_| |_|___/\___|_|  \___|\___|_| |_|  :
+# ·······························································
 
-  - id: draw_timer_timeline
-    then:
-      - lambda: |
-          id(check_if_timers_active).execute();
-          id(check_if_timers).execute();
-          if (id(global_is_timer_active)){
-            id(fetch_first_active_timer).execute();
-            int active_pixels = round( 466 * id(global_first_active_timer).seconds_left / std::max(id(global_first_active_timer).total_seconds , static_cast<uint32_t>(1)) );
-            if (active_pixels > 0){
-              id(main_display).filled_rectangle(0 , 436 , 466 , 30 , Color::WHITE );
-              id(main_display).filled_rectangle(0 , 438 , active_pixels , 26 , id(active_timer_color) );
-            }
-          } else if (id(global_is_timer)){
-            id(fetch_first_timer).execute();
-            int active_pixels = round( 466 * id(global_first_timer).seconds_left / std::max(id(global_first_timer).total_seconds , static_cast<uint32_t>(1)));
-            if (active_pixels > 0){
-              id(main_display).filled_rectangle(0 , 436 , 466 , 30 , Color::WHITE );
-              id(main_display).filled_rectangle(0 , 438 , active_pixels , 26 , id(paused_timer_color) );
-            }
-          }
-  
-  - id: draw_active_timer_widget
-    then:
-      - lambda: |
-          id(check_if_timers_active).execute();
-          if (id(global_is_timer_active)){
-            id(main_display).filled_rectangle(156 , 40 , 154 , 50 , Color::WHITE );
-            id(main_display).rectangle(156 , 40 , 154 , 50 , Color::BLACK );
+# QSPI configuration for 1.75" AMOLED display
+spi:
+  - id: display_qspi
+    type: quad
+    clk_pin: GPIO38
+    data_pins:
+      - GPIO4
+      - GPIO5
+      - GPIO6
+      - GPIO7
 
-            id(fetch_first_active_timer).execute();
-            int hours_left = floor(id(global_first_active_timer).seconds_left / 3600);
-            int minutes_left = floor((id(global_first_active_timer).seconds_left - hours_left * 3600) / 60);
-            int seconds_left = id(global_first_active_timer).seconds_left - hours_left * 3600 - minutes_left * 60 ;
-            auto display_hours = (hours_left < 10 ? "0" : "") + std::to_string(hours_left);
-            auto display_minute = (minutes_left < 10 ? "0" : "") + std::to_string(minutes_left);
-            auto display_seconds = (seconds_left  < 10 ? "0" : "") + std::to_string(seconds_left) ;
+# CST9217/FT3168 touchscreen configuration
+touchscreen:
+  - platform: cst9217
+    display: main_display
+    id: my_touchscreen
+    i2c_id: bus_a
+    interrupt_pin: GPIO11
+    reset_pin: GPIO40
+    transform:
+      mirror_x: true
+      mirror_y: true
+    on_touch:
+      then:
+        - logger.log:
+            format: Touch %d at (%d, %d)
+            args: [touch.id, touch.x, touch.y]
+            level: info
 
-            std::string display_string = "";
-            if (hours_left > 0) {
-              display_string = display_hours + ":" + display_minute;
-            } else {
-              display_string = display_minute + ":" + display_seconds;
-            }
-            id(main_display).printf(233, 52, id(font_timer), Color::BLACK, "%s", display_string.c_str());
-          }
-  
-  - id: check_alarm
-    then:
-      - lambda: |-
-          id(publish_current_time).execute();
-          // Check alarm
-          if (id(alarm_on).state && id(alarm_time).has_state()) {
-            // Get the stored alarm time from the sensor
-            auto set_alarm_time = id(alarm_time).state;
-            if (set_alarm_time.length() == 5 &&
-              isdigit(set_alarm_time[0]) && isdigit(set_alarm_time[1]) &&
-              isdigit(set_alarm_time[3]) && isdigit(set_alarm_time[4])) {
-              auto alarm_hour = std::stoi(set_alarm_time.substr(0, 2));
-              auto alarm_minute = std::stoi(set_alarm_time.substr(3, 2));
+# 1.75" Round AMOLED Display Configuration (466x466 with CO5300 Driver)
 
-              // Trigger action if current time matches alarm time
-              auto time_now = id(homeassistant_time).now();
-              if (time_now.hour == alarm_hour && time_now.minute == alarm_minute) {
-                auto action = id(alarm_action).current_option();
-                if (action == "Play sound") {
-                  id(timer_ringing).turn_on();
-                } else if (action == "Send event") {
-                  id(send_alarm_event).execute();
-                } else if (action == "Sound and event") {
-                  id(timer_ringing).turn_on();
-                  id(send_alarm_event).execute();
-                } 
-              }
-            } else {
-              ESP_LOGW("alarm", "Incorrect alarm time setting");
-            }
-          }
+# Display Configuration
+# https://github.com/STB3/esphome-Viewe_UEDX4646/blob/master/viewe-uedx46460015-example.yaml
+display:
+  - platform: mipi_spi
+    id: main_display
+    model: CO5300
+    bus_mode: quad
+    reset_pin: GPIO39
+    cs_pin: GPIO12
+    dimensions:
+      height: 466
+      width: 466
+      offset_height: 0
+      offset_width: 6  # UE015WV-RB24-A021A has 6-pixel horizontal offset
+    update_interval: never
+    color_depth: 16
+    buffer_size: 100%  # Full buffer for smooth rendering
 
-  - id: send_alarm_event
-    then:
-      - homeassistant.event:
-          event: esphome.alarm_ringing
-  - id: send_tts_uri_event
-    parameters:
-      tts_uri: string
-    then:
-      - homeassistant.event:
-          event: esphome.tts_uri
-          data:
-            uri: !lambda return tts_uri;
-  - id: send_stt_text_event
-    parameters:
-      stt_text: string
-    then:
-      - homeassistant.event:
-          event: esphome.stt_text
-          data:
-            text: !lambda return stt_text;
-  - id: publish_current_time
-    then:
-      - lambda: |-
-          // Publish current time
-          auto time_now = id(homeassistant_time).now();
-          id(current_time).publish_state(time_now.strftime("%H:%M"));
+    # Display initialization sequence
+    init_sequence:
+      - [ 0xD0, 0x07, 0x42, 0x18]  # Gamma correction positive
+      - delay 10ms
+      - [ 0xD1, 0x00, 0x07, 0x10]  # Gamma correction negative
+      - delay 10ms
 
-  # Script executed when we want to play sounds on the device.
-  - id: play_sound
-    parameters:
-      priority: bool
-      # sound_file: "audio::AudioFile*"
-      sound_file: string
+lvgl:
+  displays:
+    - main_display 
+  touchscreens: 
+    - my_touchscreen
+  on_swipe_right:
     then:
-      - if:
-          condition:
-            lambda: return priority;
-          then:
-            - media_player.stop:
-                id: external_media_player
-                announcement: true
-      - lambda: |-
-          if ( (id(external_media_player).state != media_player::MediaPlayerState::MEDIA_PLAYER_STATE_ANNOUNCING ) || priority) {
-            id(external_media_player)
-              ->make_call()
-              .set_media_url("file://" + sound_file)
-              .set_announcement(true)
-              .perform();
-          }
+      - lambda: 'lv_indev_wait_release(lv_indev_get_act());'
+      - lvgl.page.next:        
+          animation: OUT_RIGHT
+          time: 300ms
+  on_swipe_left:
+    then:
+      - lambda: 'lv_indev_wait_release(lv_indev_get_act());'
+      - lvgl.page.previous:        
+          animation: OUT_RIGHT
+          time: 300ms
+  pages:
+    - id: Startup
+      skip: true
+      bg_color: BLACK
+      widgets:
+        - image:
+            src: casita_initializing
+            align: CENTER
+        - label:
+            text: Home Assistant
+            text_color: WHITE
+            align: CENTER
+            y: 100
 
-  # Script executed when the timer is ringing, to playback sounds.
-  - id: ring_timer
-    then:
-      - script.execute: enable_repeat_one
-      - script.execute:
-          id: play_sound
-          priority: true
-          sound_file: "timer_finished_sound"
+    - id: No_Wifi
+      skip: true
+      bg_color: BLACK
+      widgets:
+        - image:
+            src: error_no_wifi
+            align: CENTER
 
-  # Script executed when the timer is ringing, to repeat the timer finished sound.
-  - id: enable_repeat_one
-    then:
-      - media_player.repeat_one:
-          id: external_media_player
-          announcement: true
-      # Turn on the repeat mode and pause for 500 ms between playlist items/repeats
-      - lambda: |-
-            id(external_media_player)->set_playlist_delay_ms(1, 500);
-        
-  # Script execute when the timer is done ringing, to disable repeat mode.
-  - id: disable_repeat
-    then:
-      # Turn off the repeat mode and pause for 0 ms between playlist items/repeats
-      - media_player.repeat_off:
-          id: external_media_player
-          announcement: true
-      - lambda: |-
-            id(external_media_player)->set_playlist_delay_ms(1, 0);
+    - id: No_HA
+      skip: true
+      bg_color: BLACK
+      widgets:
+        - image:
+            src: error_no_ha
+            align: CENTER
+
+    - id: VA_Idle
+      skip: true
+      bg_color: BLACK
+      widgets:
+        - image:
+            src: casita_idle
+            align: CENTER
+        - label:
+            text: Home Assistant
+            text_color: WHITE
+            align: CENTER
+            y: 100
+
+    - id: VA_Thinking
+      skip: true
+      bg_color: 0xf2f4f9
+      widgets:
+        - image:
+            src: casita_thinking
+            align: CENTER
+
+    - id: VA_Listening
+      skip: true
+      bg_color: 0xf2f4f9
+      widgets:
+        - image:
+            src: casita_listening
+            align: CENTER
+
+    - id: VA_Replying
+      skip: true
+      bg_color: 0xf2f4f9
+      widgets:
+        - image:
+            src: casita_replying
+            align: CENTER
+
+    - id: VA_Error
+      skip: true
+      bg_color: BLACK
+      widgets:
+        - image:
+            src: casita_error
+            align: CENTER
+
+    - id: VA_Muted # Should this be a icon on the top page?
+      skip: true
+      bg_color: 0xf2f4f9
+      widgets:
+        - image:
+            src: casita_muted
+            align: CENTER
+
+    - id: VA_Timer
+      skip: true
+      bg_color: 0xf2f4f9
+      widgets:
+        - image:
+            src: casita_timer_finished
+            align: CENTER
+
+    - id: clock_page
+      widgets:
+          - obj:
+              height: 470
+              width: 470
+              align: center
+              pad_all: 4
+              bg_color: Black
+              border_width: 0  
+              widgets:
+              - meter:
+                  height: 100%
+                  width: 100%
+                  align: center
+                  bg_color: Black
+
+                  scales:
+                    # Minor ticks
+                    - ticks:
+                        width: 2
+                        count: 61
+                        length: 10
+                        color: White
+                      range_from: 0
+                      range_to: 60
+                      angle_range: 360
+                      rotation: 270
+
+                      # Minuite hand
+                      indicators:
+                        - line:
+                            id: minute_hand
+                            width: 3
+                            color: White
+                            r_mod: -1
+                    # Major ticks
+                    - angle_range: 330
+                      rotation: 300
+                      range_from: 1
+                      range_to: 12
+                      ticks:
+                        width: 3
+                        count: 12
+                        length: 20
+                        color: Red                       
+
+                    # Hour hand
+                    - angle_range: 360
+                      rotation: 270
+                      range_from: 0
+                      range_to: 720
+                      indicators:
+                        - line:
+                            id: hour_hand
+                            width: 4
+                            color: White
+                            r_mod: -40
+                   
+              - label:
+                  id: day_label
+                  align: Center
+                  text_color: Red
+                  text_align: Center
+                  text_font: font_responcse
+                  y: -30
+              - label:
+                  id: date_label
+                  align: Center
+                  text_color: Red
+                  text_align: Center
+                  text_font: font_responcse
+                  y: 30
+
+# ·······································································
+# :                                                                     :
+# :      ____          _ _       _                                      :
+# :     / ___|_      _(_) |_ ___| |__   ___  ___                        :
+# :     \___ \ \ /\ / / | __/ __| '_ \ / _ \/ __|                       :
+# :      ___) \ V  V /| | || (__| | | |  __/\__ \_                      :
+# :     |____/ \_/\_/ |_|\__\___|_| |_|\___||___( )              _      :
+# :     / ___|  ___ _ __  ___  ___  _ __ ___    |/__ _ _ __   __| |     :
+# :     \___ \ / _ \ '_ \/ __|/ _ \| '__/ __|    / _` | '_ \ / _` |     :
+# :      ___) |  __/ | | \__ \ (_) | |  \__ \_  | (_| | | | | (_| |     :
+# :     |____/ \___|_| |_|___/\___/|_|  |___( )  \__,_|_| |_|\__,_|     :
+# :      / ___| | ___ | |__   __ _| |___    |/                          :
+# :     | |  _| |/ _ \| '_ \ / _` | / __|                               :
+# :     | |_| | | (_) | |_) | (_| | \__ \                               :
+# :      \____|_|\___/|_.__/ \__,_|_|___/                               :
+# :                                                                     :
+# ·······································································
 
 switch:
-  - platform: template
-    id: show_text
-    name: Show Text
-    icon: "mdi:card-text-outline"
-    entity_category: config
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_ON
-
   - platform: gpio
     pin: 
       number: GPIO46
@@ -1147,6 +826,15 @@ switch:
     restore_mode: ALWAYS_ON
     internal: false
 
+  # Button click Sounds Switch.
+  - platform: template
+    id: button_sound
+    name: Button click sounds
+    icon: "mdi:bullhorn"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
   # software speaker mute
   - platform: template
     id: speaker_mute_switch
@@ -1156,10 +844,10 @@ switch:
     optimistic: true
     turn_on_action:
       - speaker.mute_on:
-          id: i2s_audio_speaker
+          id: box_speaker
     turn_off_action: 
       - speaker.mute_off:
-          id: i2s_audio_speaker
+          id: box_speaker
 
   # stateless momentary mic mute switch
   - platform: gpio
@@ -1228,15 +916,6 @@ switch:
           then:
             - switch.turn_on: mute_toggle
 
-  # Button click Sounds Switch.
-  - platform: template
-    id: button_sound
-    name: Button click sounds
-    icon: "mdi:bullhorn"
-    entity_category: config
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_ON
-
   # Mute Sound Switch.
   - platform: template
     id: mute_sound
@@ -1261,41 +940,6 @@ switch:
     optimistic: true
     internal: true
     restore_mode: ALWAYS_OFF
-    on_turn_off:
-      # Disable stop wake word
-      - micro_wake_word.disable_model: stop
-      - script.execute: disable_repeat
-      # Stop any current annoucement (ie: stop the timer ring mid playback)
-      - if:
-          condition:
-            media_player.is_announcing:
-              id: external_media_player
-          then:
-            media_player.stop:
-              announcement: true
-              id: external_media_player
-      # Set back ducking ratio to zero
-      - mixer_speaker.apply_ducking:
-          id: media_mixing_input
-          decibel_reduction: 0
-          duration: 1.0s
-      # Refresh the LED ring
-      - script.execute: draw_display
-    on_turn_on:
-      # Duck audio
-      - mixer_speaker.apply_ducking:
-          id: media_mixing_input
-          decibel_reduction: 20
-          duration: 0.0s
-      # Enable stop wake word
-      - micro_wake_word.enable_model: stop
-      # Ring timer
-      - script.execute: ring_timer
-      # Refresh LED
-      - script.execute: draw_display
-      # If 15 minutes have passed and the timer is still ringing, stop it.
-      - delay: 15min
-      - switch.turn_off: timer_ringing
 
   # Defines if alarm is active
   - platform: template
@@ -1304,17 +948,48 @@ switch:
     id: alarm_on
     icon: mdi:bell-badge
     name: "Alarm on"
-    on_turn_on:
-      - script.execute: draw_display
-    on_turn_off:
-      - script.execute: draw_display
 
-select:
-  - platform: logger
-    id: logger_select
-    name: Logger Level
+event:
+  # Event entity exposed to the user to automate on complex center button presses.
+  # The simple press is not exposed as it is used to control the device itself.
+  - platform: template
+    id: button_press_event
+    name: "Button press"
+    icon: mdi:button-pointer
+    device_class: button
+    event_types:
+      - double_press
+      - triple_press
+      - long_press
+
+sensor:
+  - platform: template
+    id: next_timer
+    name: "Next timer"
+    update_interval: never
+    disabled_by_default: true
+    device_class: duration
+    unit_of_measurement: s
+    icon: "mdi:timer"
+
+text_sensor:
+  - platform: template
+    id: next_timer_name
+    name: "Next timer name"
+    icon: "mdi:timer"
     disabled_by_default: true
 
+  - platform: template
+    name: "Alarm time"
+    id: alarm_time
+    icon: mdi:bell-ring
+
+  - platform: template
+    name: "Current device time"
+    id: current_time
+    icon: mdi:clock
+
+select:
   - platform: template
     optimistic: true
     name: "Alarm action"
@@ -1330,92 +1005,396 @@ select:
         - lambda: |-
             id(saved_alarm_action) = x;
 
+color:
+  - id: active_timer_color
+    hex: "26ed3a"
+  - id: paused_timer_color
+    hex: "3b89e3"
+
+light:
+  - platform: monochromatic
+    id: display_backlight
+    name: "Backlight"
+    output: backlight_brightness
+    default_transition_length:
+      milliseconds: 0
+    initial_state:
+      brightness: 81%
+    restore_mode:
+      ALWAYS_ON
+
+output:
+  - platform: template
+    id: backlight_brightness
+    type: float
+    write_action:
+      then:
+        - lambda: |-
+            id(main_display).set_brightness(state*255);
+
 globals:
   - id: init_in_progress
     type: bool
     restore_value: false
     initial_value: "true"
+
   - id: voice_assistant_phase
     type: int
     restore_value: false
     initial_value: ${voice_assist_not_ready_phase_id}
-  - id: global_first_active_timer
-    type: voice_assistant::Timer
+
+  - id: previous_phase
+    type: int
     restore_value: false
-  - id: global_is_timer_active
-    type: bool
-    restore_value: false
-  - id: global_first_timer
-    type: voice_assistant::Timer
-    restore_value: false
-  - id: global_is_timer
-    type: bool
-    restore_value: false
-    # Global variable storing the state of ImprovBLE. Used to draw different LED animations
-  - id: improv_ble_in_progress
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: saved_alarm_action
-    type: std::string
-    restore_value: yes
-    initial_value: '"Play sound"'
-  # Global variable storing the first active timer
-  - id: first_active_timer
-    type: voice_assistant::Timer
-    restore_value: no
-  # Global variable storing if a timer is active
-  - id: is_timer_active
-    type: bool
-    restore_value: no
-  - id: saved_alarm_time
-    type: std::string
-    restore_value: yes
-    initial_value: '"Unknown"'
-  - id: saved_time_zone
-    type: std::string
-    restore_value: yes
-    initial_value: '"UTC0"'
+    initial_value: ${voice_assist_not_ready_phase_id}
+
   # Global variable storing if a factory reset was requested. If it is set to true, the device will factory reset once the center button is released
   - id: factory_reset_requested
     type: bool
     restore_value: no
     initial_value: 'false'
 
-media_source:
-  - platform: sendspin
-    id: sendspin_source
-  - platform: http_request
-    id: http_source
-    buffer_size: 500000
-  - platform: file
-    id: file_source
-    files:
-      - id: center_button_press_sound
-        file: ${center_button_press_sound_file}
-      - id: center_button_double_press_sound
-        file: ${center_button_double_press_sound_file}
-      - id: center_button_triple_press_sound
-        file: ${center_button_triple_press_sound_file}
-      - id: center_button_long_press_sound
-        file: ${center_button_long_press_sound_file}
-      - id: factory_reset_initiated_sound
-        file: ${factory_reset_initiated_sound_file}
-      - id: factory_reset_cancelled_sound
-        file: ${factory_reset_cancelled_sound_file}
-      - id: factory_reset_confirmed_sound
-        file: ${factory_reset_confirmed_sound_file}
-      - id: mute_switch_on_sound
-        file: ${mute_switch_on_sound_file}
-      - id: mute_switch_off_sound
-        file: ${mute_switch_off_sound_file}
-      - id: timer_finished_sound
-        file: ${timer_finished_sound_file}
-      - id: wake_word_triggered_sound
-        file: ${wake_word_triggered_sound_file}
-      - id: error_cloud_expired
-        file: ${error_cloud_expired_sound_file}
+  - id: global_is_timer_active
+    type: bool
+    restore_value: false
 
+  # Global variable storing if a timer is active
+  - id: is_timer_active
+    type: bool
+    restore_value: no
+
+  - id: global_first_active_timer
+    type: voice_assistant::Timer
+    restore_value: false
+
+    # Global variable storing the first active timer
+  - id: first_active_timer
+    type: voice_assistant::Timer
+    restore_value: no
+
+  - id: saved_alarm_action
+    type: std::string
+    restore_value: yes
+    initial_value: '"Play sound"'
+
+  - id: saved_alarm_time
+    type: std::string
+    restore_value: yes
+    initial_value: '"Unknown"'
+
+  - id: saved_time_zone
+    type: std::string
+    restore_value: yes
+    initial_value: '"UTC0"'
+
+button:
+  - platform: factory_reset
+    id: factory_reset_btn
+    name: "Factory Reset"
+    entity_category: diagnostic
+    internal: true
+
+  - platform: restart
+    id: restart_button
+    name: "Restart"
+    entity_category: config
+    disabled_by_default: true
+    icon: "mdi:restart"
+
+# ·············································
+# :                                           :
+# :      ____            _       _            :
+# :     / ___|  ___ _ __(_)_ __ | |_ ___      :
+# :     \___ \ / __| '__| | '_ \| __/ __|     :
+# :      ___) | (__| |  | | |_) | |_\__ \     :
+# :     |____/ \___|_|  |_| .__/ \__|___/     :
+# :                       |_|                 :
+# :                                           :
+# ·············································
+script:
+
+  - id: publish_current_time
+    then:
+      - lambda: |-
+          // Publish current time
+          auto time_now = id(homeassistant_time).now();
+          id(current_time).publish_state(time_now.strftime("%H:%M"));
+
+  - id: check_alarm
+    then:
+      - lambda: |-
+          id(publish_current_time).execute();
+          // Check alarm
+          if (id(alarm_on).state && id(alarm_time).has_state()) {
+            // Get the stored alarm time from the sensor
+            auto set_alarm_time = id(alarm_time).state;
+            if (set_alarm_time.length() == 5 &&
+              isdigit(set_alarm_time[0]) && isdigit(set_alarm_time[1]) &&
+              isdigit(set_alarm_time[3]) && isdigit(set_alarm_time[4])) {
+              auto alarm_hour = std::stoi(set_alarm_time.substr(0, 2));
+              auto alarm_minute = std::stoi(set_alarm_time.substr(3, 2));
+
+              // Trigger action if current time matches alarm time
+              auto time_now = id(homeassistant_time).now();
+              if (time_now.hour == alarm_hour && time_now.minute == alarm_minute) {
+                auto action = id(alarm_action).current_option();
+                if (action == "Play sound") {
+                  id(timer_ringing).turn_on();
+                } else if (action == "Send event") {
+                  id(send_alarm_event).execute();
+                } else if (action == "Sound and event") {
+                  id(timer_ringing).turn_on();
+                  id(send_alarm_event).execute();
+                } 
+              }
+            } else {
+              ESP_LOGW("alarm", "Incorrect alarm time setting");
+            }
+          }
+
+  - id: send_alarm_event
+    then:
+      - homeassistant.event:
+          event: esphome.alarm_ringing
+
+  - id: time_update
+    then:
+      - lvgl.indicator.update:
+          id: minute_hand
+          value: !lambda |-
+            return id(homeassistant_time).now().minute;
+      - lvgl.indicator.update:
+          id: hour_hand
+          value: !lambda |-
+            auto now = id(homeassistant_time).now();
+            return std::fmod(now.hour, 12) * 60 + now.minute;
+      - lvgl.label.update:
+          id: date_label
+          text: !lambda |-
+            static const char * const mon_names[] = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+                                                     "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"};
+            static char date_buf[8];
+            auto now = id(homeassistant_time).now();
+            snprintf(date_buf, sizeof(date_buf), "%s %2d", mon_names[now.month-1], now.day_of_month);
+            return date_buf;
+      - lvgl.label.update:
+          id: day_label
+          text: !lambda |-
+            static const char * const day_names[] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
+            return day_names[id(homeassistant_time).now().day_of_week - 1];
+# ········································································································
+# :   ____            _       _             ____                       ____  _           _               :
+# :  / ___|  ___ _ __(_)_ __ | |_          |  _ \ _ __ __ ___      __ |  _ \(_)___ _ __ | | __ _ _   _   :
+# :  \___ \ / __| '__| | '_ \| __|  _____  | | | | '__/ _` \ \ /\ / / | | | | / __| '_ \| |/ _` | | | |  :
+# :   ___) | (__| |  | | |_) | |_  |_____| | |_| | | | (_| |\ V  V /  | |_| | \__ \ |_) | | (_| | |_| |  :
+# :  |____/ \___|_|  |_| .__/ \__|         |____/|_|  \__,_| \_/\_/   |____/|_|___/ .__/|_|\__,_|\__, |  :
+# :                    |_|                                                        |_|            |___/   :
+# ········································································································
+# @TODO - This should be based on a timer/loop and check if any action is needed rather than wait for the call from various events
+# @TODO - States shoudl be system based states, keyed to VA.  It's ok if the system has duplicated states, but the system is going to have MORE
+# @TODO - Case statement
+  - id: draw_display
+    then:
+      - lambda: |
+          id(check_if_timers_active).execute();
+          if (id(is_timer_active)){
+            id(fetch_first_active_timer).execute();
+          }
+          if(id(init_in_progress)) {
+            //During Init window, only display startup screen.
+            id(draw_display_initializing).execute();
+          } else if (id(voice_assistant_phase) == ${voice_assist_noWifi_phase_id}) {
+            //Outside of init window, draw no wifi screen
+            id(draw_display_no_wifi_connection_state).execute();
+          } else if (id(voice_assistant_phase) == ${voice_assist_noHA_phase_id}) {
+            //Outside of init window, draw no HA connection screen
+            id(draw_display_no_ha_connection_state).execute();
+          } else if (id(voice_assistant_phase) == ${voice_assist_noVA_phase_id}) {
+            //Outside of init window, draw no HA connection screen
+            id(draw_display_no_va_connection_state).execute(); 
+          } else if (id(timer_ringing).state) {
+            id(draw_display_timer_ringing).execute();
+          } else if (id(voice_assistant_phase) == ${voice_assist_waiting_for_command_phase_id}) {
+            id(draw_display_voice_assistant_waiting_for_command_phase).execute();
+          } else if (id(voice_assistant_phase) == ${voice_assist_listening_for_command_phase_id}) {
+            id(draw_display_voice_assistant_listening_for_command_phase).execute();
+          } else if (id(voice_assistant_phase) == ${voice_assist_thinking_phase_id}) {
+            id(draw_display_voice_assistant_thinking_phase).execute();
+          } else if (id(voice_assistant_phase) == ${voice_assist_replying_phase_id}) {
+            id(draw_display_voice_assistant_replying_phase).execute();
+          } else if (id(voice_assistant_phase) == ${voice_assist_error_phase_id}) {
+            id(draw_display_voice_assistant_error_phase).execute();
+          } else if (id(voice_assistant_phase) == ${voice_assist_not_ready_phase_id}) {
+            id(draw_display_voice_assistant_not_ready_phase).execute();
+          } else if (id(is_timer_active)) {
+            id(draw_display_timer_ticking).execute();
+          } else if (id(alarm_on).state) {
+            id(draw_display_alarm_active).execute();
+          } else if (id(voice_assistant_phase) == ${voice_assist_idle_phase_id}) {
+            id(draw_display_voice_assistant_idle_phase).execute();
+          }
+
+  # Script executed during Improv BLE
+  # Warm White slow pulse
+  - id: draw_display_initializing
+    then:
+      - lvgl.page.show: Startup
+      # - component.update: main_display
+
+  # Script executed when the device has no Wifi connection after initial init period      
+  - id: draw_display_no_wifi_connection_state
+    then:
+      - lvgl.page.show: No_Wifi
+      - component.update: main_display   
+
+  # Script executed when the device has no connection to Home Assistant
+  # Red slow pulse (This will be visible during HA updates for example)
+  - id: draw_display_no_ha_connection_state
+    then:
+      - lvgl.page.show: No_HA
+      - component.update: main_display
+
+  # Script executed when the device has no connection to Home Assistant
+  # Red slow pulse (This will be visible during HA updates for example)
+  - id: draw_display_no_va_connection_state
+    then:
+      - lvgl.page.show: No_HA
+      - component.update: main_display
+
+  # Script executed when the timer is ringing, to control the LEDs
+  # The LED blinks green.
+  - id: draw_display_timer_ringing
+    then:
+      - lvgl.page.show: VA_Timer
+      - component.update: main_display
+
+  # Script executed when the timer is ticking, to control the LEDs
+  # Slow dim while pulse.
+  # Need to create a page for this
+  - id: draw_display_timer_ticking
+    then:
+
+  # Script executed when the alarm is active
+  # The LED turns on dim green
+  # Page needs created for this
+  - id: draw_display_alarm_active
+    then:
+
+  # Script executed when the voice assistant is idle (waiting for a wake word)
+  # Display Idle Page
+  - id: draw_display_voice_assistant_idle_phase
+    then:
+      - logger.log: "Show Clock"
+      - lvgl.page.show: clock_page
+      - component.update: main_display
+
+  # Script executed when the voice assistant is waiting for a command (After the wake word)
+  # Display Listening Page
+  - id: draw_display_voice_assistant_waiting_for_command_phase
+    then:
+      - lvgl.page.show: VA_Listening
+      - component.update: main_display
+
+  # Script executed when the voice assistant is listening to a command
+  # Display Listening Page
+  - id: draw_display_voice_assistant_listening_for_command_phase
+    then:
+      - lvgl.page.show: VA_Listening
+      - component.update: main_display
+
+  # Script executed when the voice assistant is thinking to a command
+  # Fast purple pulse
+  - id: draw_display_voice_assistant_thinking_phase
+    then:
+      - lvgl.page.show: VA_Thinking
+      - component.update: main_display
+
+  # Script executed when the voice assistant is replying to a command
+  # Slow cyan pulse
+  - id: draw_display_voice_assistant_replying_phase
+    then:
+      - lvgl.page.show: VA_Replying
+      - component.update: main_display
+
+  # Script executed when the voice assistant is in error
+  # Fast Red Pulse
+  - id: draw_display_voice_assistant_error_phase
+    then:
+      - lvgl.page.show: VA_Error
+      - component.update: main_display
+
+  # Script executed when the voice assistant is not ready
+  - id: draw_display_voice_assistant_not_ready_phase
+    then:
+      - lvgl.page.show: VA_Error
+      - component.update: main_display
+
+# ···································································································
+# :   ____            _       _             ____  _                 ____                        _   :
+# :  / ___|  ___ _ __(_)_ __ | |_          |  _ \| | __ _ _   _    / ___|  ___  _   _ _ __   __| |  :
+# :  \___ \ / __| '__| | '_ \| __|  _____  | |_) | |/ _` | | | |   \___ \ / _ \| | | | '_ \ / _` |  :
+# :   ___) | (__| |  | | |_) | |_  |_____| |  __/| | (_| | |_| |    ___) | (_) | |_| | | | | (_| |  :
+# :  |____/ \___|_|  |_| .__/ \__|         |_|   |_|\__,_|\__, |___|____/ \___/ \__,_|_| |_|\__,_|  :
+# :                    |_|                                |___/_____|                               :
+# ···································································································
+# Script executed when we want to play sounds on the device.
+  - id: play_sound
+    parameters:
+      priority: bool
+      # sound_file: "audio::AudioFile*"
+      sound_file: string
+    then:
+      - if:
+          condition:
+            lambda: return priority;
+          then:
+            - media_player.stop:
+                id: external_media_player
+                announcement: true
+      - lambda: |-
+          if ( (id(external_media_player).state != media_player::MediaPlayerState::MEDIA_PLAYER_STATE_ANNOUNCING ) || priority) {
+            id(external_media_player)
+              ->make_call()
+              .set_media_url("file://" + sound_file)
+              .set_announcement(true)
+              .perform();
+          }
+
+  - id: fetch_first_active_timer
+    then:
+      - lambda: |
+          const auto timers = id(va).get_timers();
+          if (timers.empty()) return;
+          auto output_timer = timers.begin()->second;
+          for (auto &iterable_timer : timers) {
+            if (iterable_timer.second.is_active && iterable_timer.second.seconds_left <= output_timer.seconds_left) {
+              output_timer = iterable_timer.second;
+            }
+          }
+          id(global_first_active_timer) = output_timer;
+
+  - id: check_if_timers_active
+    then:
+      - lambda: |
+          const auto timers = id(va).get_timers();
+          bool output = false;
+          if (timers.size() > 0) {
+            for (auto &iterable_timer : timers) {
+              if(iterable_timer.second.is_active) {
+                output = true;
+              }
+            }
+          }
+          id(global_is_timer_active) = output;
+
+
+# ·····························································
+# :   ____  _        _   _        __  __          _ _         :
+# :  / ___|| |_ __ _| |_(_) ___  |  \/  | ___  __| (_) __ _   :
+# :  \___ \| __/ _` | __| |/ __| | |\/| |/ _ \/ _` | |/ _` |  :
+# :   ___) | || (_| | |_| | (__  | |  | |  __/ (_| | | (_| |  :
+# :  |____/ \__\__,_|\__|_|\___| |_|  |_|\___|\__,_|_|\__,_|  :
+# ·····························································
 image:
   - file: ${loading_illustration_file}
     id: casita_initializing
@@ -1476,7 +1455,7 @@ image:
     resize: 466x466
     type: RGB565
     transparency: alpha_channel
-    
+
 font:
   - file:
       type: gfonts
@@ -1491,7 +1470,7 @@ font:
       type: gfonts
       family: ${font_family}
       weight: 300
-    id: font_response
+    id: font_responcse
     size: 15
     glyphsets:
       - ${font_glyphsets}
@@ -1504,224 +1483,28 @@ font:
     glyphsets:
       - ${font_glyphsets}
 
-text_sensor:
-  - id: text_request
-    platform: template
-    name: "Text Request"
-    on_value:
-      lambda: |-
-        if(id(text_request).state.length()>30) {
-          std::string name = id(text_request).state.c_str();
-          std::string truncated = esphome::str_truncate(name.c_str(),31);
-          id(text_request).state = (truncated+"...").c_str();
-        }
-
-  - id: text_response
-    platform: template
-    name: "Text Response"
-    on_value:
-      lambda: |-
-        if(id(text_response).state.length()>30) {
-          std::string name = id(text_response).state.c_str();
-          std::string truncated = esphome::str_truncate(name.c_str(),31);
-          id(text_response).state = (truncated+"...").c_str();
-        }
-
-  - platform: template
-    id: next_timer_name
-    name: "Next timer name"
-    icon: "mdi:timer"
-    disabled_by_default: true
-
-  - platform: template
-    name: "Alarm time"
-    id: alarm_time
-    icon: mdi:bell-ring
-
-  - platform: template
-    name: "Current device time"
-    id: current_time
-    icon: mdi:clock
-
-color:
-  - id: active_timer_color
-    hex: "26ed3a"
-  - id: paused_timer_color
-    hex: "3b89e3"
-
-# QSPI configuration for 1.75" AMOLED display
-spi:
-  - id: display_spi
-    type: quad
-    clk_pin: GPIO38
-    data_pins: [4, 5, 6, 7]
-
-# CST9217/FT3168 touchscreen configuration
-touchscreen:
-  - platform: cst9217
-    display: main_display
-    id: my_touchscreen
-    i2c_id: bus_a
-    interrupt_pin: GPIO11
-    reset_pin: GPIO40
-    transform:
-      mirror_x: true
-      mirror_y: true
-    on_touch:
-      then:
-        - logger.log:
-            format: Touch %d at (%d, %d)
-            args: [touch.id, touch.x, touch.y]
-
-# 1.75" Round AMOLED Display Configuration (466x466 with CO5300 Driver)
-display:
-  - platform: qspi_dbi
-    model: CUSTOM
-    id: main_display
-    spi_id: display_spi
-    cs_pin: GPIO12
-    reset_pin: GPIO39
-    # te_pin: GPIO13  # optional tearing effect sync
-    dimensions:
-      width: 466
-      height: 466
-    color_order: RGB
-    invert_colors: false
-    brightness: 255
-    update_interval: never
-    init_sequence:
-      - [0x11]                 # Sleep Out
-      - [0xFE, 0x00]           # Command Set extension
-      - [0xC4, 0x80]           # SPI Interface Control (enable QSPI mode)
-      - [0x3A, 0x55]           # Pixel Format: 16-bit/pixel
-      - [0x53, 0x20]           # Display Control (Dimming enabled)
-      - [0x63, 0xFF]           # Display Brightness (max brightness)
-      - [0x29]                 # Display ON
-      - [0x51, 0xD0]           # Write Display Brightness (normal brightness)
-      - [0x58, 0x00]           # Disable contrast enhance
-
-    pages:
-      - id: idle_page
-        lambda: |-
-          it.fill(Color::BLACK);
-          it.image(233, 233, id(casita_idle), ImageAlign::CENTER);
-          it.printf(233, 370, id(font_response), Color::WHITE, TextAlign::CENTER, "Home Assistant");
-          id(draw_timer_timeline).execute();
-          id(draw_active_timer_widget).execute();
-      - id: listening_page
-        lambda: |-
-          it.fill(Color(255, 255, 255));
-          it.image(233, 233, id(casita_listening), ImageAlign::CENTER);
-          id(draw_timer_timeline).execute();
-      - id: thinking_page
-        lambda: |-
-          it.fill(Color(255, 255, 255));
-          it.image(233, 233, id(casita_thinking), ImageAlign::CENTER);
-          if (id(show_text).state) {
-            it.filled_rectangle(60, 20, 346, 50, Color::WHITE);
-            it.rectangle(60, 20, 346, 50, Color::BLACK);
-            it.printf(233, 30, id(font_request), Color::BLACK, TextAlign::CENTER, "%s", id(text_request).state.c_str());
-          }
-          id(draw_timer_timeline).execute();
-      - id: replying_page
-        lambda: |-
-          it.fill(Color(255, 255, 255));
-          it.image(233, 233, id(casita_replying), ImageAlign::CENTER);
-          if (id(show_text).state) {
-            it.filled_rectangle(60, 396, 346, 50, Color::WHITE);
-            it.rectangle(60, 396, 346, 50, Color::BLACK);
-            it.printf(233, 406, id(font_response), Color::BLACK, TextAlign::CENTER, "%s", id(text_response).state.c_str());
-          }
-          id(draw_timer_timeline).execute();
-      - id: timer_finished_page
-        lambda: |-
-          it.fill(Color::BLACK);
-          it.image(233, 233, id(casita_timer_finished), ImageAlign::CENTER);
-      - id: error_page
-        lambda: |-
-          it.fill(Color::BLACK);
-          it.image(233, 233, id(casita_error), ImageAlign::CENTER);
-      - id: no_ha_page
-        lambda: |-
-          it.fill(Color::BLACK);
-          it.image(233, 233, id(error_no_ha), ImageAlign::CENTER);
-      - id: no_wifi_page
-        lambda: |-
-          it.fill(Color::BLACK);
-          it.image(233, 233, id(error_no_wifi), ImageAlign::CENTER);
-      - id: initializing_page
-        lambda: |-
-          it.fill(Color::BLACK);
-          it.image(233, 233, id(casita_initializing), ImageAlign::CENTER);
-          it.printf(233, 370, id(font_response), Color::WHITE, TextAlign::CENTER, "Home Assistant");
-      - id: muted_page
-        lambda: |-
-          it.fill(Color::BLACK);
-          it.image(233, 233, id(casita_muted), ImageAlign::CENTER);
-          id(draw_timer_timeline).execute();
-          id(draw_active_timer_widget).execute();
-      - id: touch_page
-        lambda: |-
-          it.fill(Color(0, 0, 255));
-      - id: not_ready_page
-        lambda: |-
-          it.fill(Color(255, 255, 0));
-      - id: factory_reset_page
-        lambda: |-
-          it.fill( Color(255, 0, 0));
-
-number:
-  - platform: template
-    name: "Screen Brightness"
-    id: screen_brightness
-    min_value: 0
-    max_value: 255
-    step: 1
-    initial_value: 200
-    set_action:
-      - lambda: |-
-          // Note: Brightness control not available on GC9A01
-          ESP_LOGW("brightness", "Brightness control not supported on this display");
-
-
-# Include external components
+# ·······································································
+# :                                                                     :
+# :      _____      _                        _                          :
+# :     | ____|_  _| |_ ___ _ __ _ __   __ _| |                         :
+# :     |  _| \ \/ / __/ _ \ '__| '_ \ / _` | |                         :
+# :     | |___ >  <| ||  __/ |  | | | | (_| | |                         :
+# :     |_____/_/\_\\__\___|_|  |_| |_|\__,_|_|            _            :
+# :      / ___|___  _ __ ___  _ __   ___  _ __   ___ _ __ | |_ ___      :
+# :     | |   / _ \| '_ ` _ \| '_ \ / _ \| '_ \ / _ \ '_ \| __/ __|     :
+# :     | |__| (_) | | | | | | |_) | (_) | | | |  __/ | | | |_\__ \     :
+# :      \____\___/|_| |_| |_| .__/ \___/|_| |_|\___|_| |_|\__|___/     :
+# :                          |_|                                        :
+# :                                                                     :
+# ·······································································
 external_components:
-  - source: 
-      type: git
-      url: https://github.com/shelson/esphome-cst9217
+  - source: github://shelson/esphome-cst9217
+    refresh: 24h
+
   - source:
-      # https://github.com/esphome/esphome/pull/12253
       type: git
       url: https://github.com/esphome/esphome
-      ref: 7f34908569650e5a8b8c83e6bf89fea561218880
-    components: [mixer]
-  - source:
-      # https://github.com/esphome/esphome/pull/12254
-      type: git
-      url: https://github.com/esphome/esphome
-      ref: 6006b896a691ad38d8045ac67564c168973d1a1d
-    components: [resampler]
-  - source:
-      # https://github.com/esphome/esphome/pull/12256
-      type: git
-      url: https://github.com/esphome/esphome
-      ref: 9148832ea4e54907bad71a24d4ced1ce6c862433
-    components: [audio]
-  - source:
-      # https://github.com/esphome/esphome/pull/12258
-      type: git
-      url: https://github.com/esphome/esphome
-      ref: bff22983a390352360796f8e1363127e0cd1f898
-    components: [media_player]
-  - source:
-      # https://github.com/esphome/esphome/pull/12284
-      type: git
-      url: https://github.com/esphome/esphome
-      ref: a6c0a861a014e64c67d46115eba8e5370777b80a
-    components: [mdns, sendspin]
-  - source:
-      # https://github.com/esphome/esphome/pull/12429
-      type: git
-      url: https://github.com/esphome/esphome
-      ref: 928204066ce0082404573ea1c6a0b58aeebbd7c6
-    components: [file, http_request, media_source, speaker_source]
+      ref: dev  # this is commit 9148832
+    components: [micro_wake_word]
+    refresh: 24h
+
