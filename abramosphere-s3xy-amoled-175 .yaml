@@ -16,6 +16,41 @@
 # :                                                                                                                                             :
 # ···············································································································································
 
+# Current Features
+# * Voice Assistant
+# * Local Wake Word
+# * Idle Screens
+#   * Clock
+#   * Weather Forcast
+# * Anouncement, and VA State Screens
+# * Media Player
+#     * Not Sendspin, due to the media player library and voice assistant not playing nicely together
+
+# Coming Soon
+# * Idle Screen rotation
+# * Sendspin
+# * Idle Screens
+#   * Current Weather
+#   * Thermostat Control
+
+#TODO
+# Forcast
+# * move temp labels up 10
+# * add dailiy forcast date string "24\nWeds"
+# * update the icons
+# Clock
+# *  larger text on date in clock
+#
+# General
+# * Figgure out how to stay on loading screen until clock has painted after the time has updated at least once.
+# * Same for weather
+# * Series of flags which all have to be true to be initialized 
+#
+# Scripts
+# * Draw Display - really needs to be a case statement somehow the if else if else if pattern isn't great on embeded systems
+#       not a huge priority becuase 1) it works 2) now that it's only called if the state changes, it's comparitively rare to even trigger.
+
+
 substitutions:
   name: "waveshare-s3-amoled-175"
   friendly_name: "Waveshare-S3-AMOLED-1.75in"
@@ -383,6 +418,120 @@ interval:
                 level: info
             - script.execute: draw_display
             - lambda: id(previous_phase) = id(voice_assistant_phase);
+  - interval: 1h
+    startup_delay: 30s
+    then:
+      - logger.log: "Preparing to fetch weather forcast"
+      - homeassistant.action:
+          action: weather.get_forecasts
+          data:
+            entity_id: weather.openweathermap
+            type: daily
+          capture_response: true
+          on_success:
+            - lambda: |-
+                struct tm tm_day; //2026-02-05T17:00:00+00:00
+                char buff[7];
+
+                JsonObjectConst JSONDay = response["response"]["weather.openweathermap"]["forecast"][0];
+                strptime(JSONDay["datetime"].as<std::string>().c_str(), "%Y-%m-%dT%H:%M:%S+00:00", &tm_day);
+                strftime(buff, sizeof buff, "%d\n%a" , &tm_day);
+                id(day1_date) = std::string(buff);
+                id(day1_cond) = id(weather_icon_map)[JSONDay["condition"].as<std::string>()];
+                id(day1_high) = JSONDay["temperature"].as<int>();
+                id(day1_low)  = JSONDay["templow"].as<int>();
+
+                JSONDay = response["response"]["weather.openweathermap"]["forecast"][1];
+                strptime(JSONDay["datetime"].as<std::string>().c_str(), "%Y-%m-%dT%H:%M:%S+00:00", &tm_day);
+                strftime(buff, sizeof buff, "%d\n%a" , &tm_day);
+                id(day2_date) = std::string(buff);
+                id(day2_cond) = id(weather_icon_map)[JSONDay["condition"].as<std::string>()];
+                id(day2_high) = JSONDay["temperature"].as<int>();
+                id(day2_low)  = JSONDay["templow"].as<int>();
+
+                JSONDay = response["response"]["weather.openweathermap"]["forecast"][2];
+                                strptime(JSONDay["datetime"].as<std::string>().c_str(), "%Y-%m-%dT%H:%M:%S+00:00", &tm_day);
+                strftime(buff, sizeof buff, "%d\n%a" , &tm_day);
+                id(day3_date) = std::string(buff);
+                id(day3_cond) = id(weather_icon_map)[JSONDay["condition"].as<std::string>()];
+                id(day3_high) = JSONDay["temperature"].as<int>();
+                id(day3_low)  = JSONDay["templow"].as<int>();
+
+                JSONDay = response["response"]["weather.openweathermap"]["forecast"][3];
+                                strptime(JSONDay["datetime"].as<std::string>().c_str(), "%Y-%m-%dT%H:%M:%S+00:00", &tm_day);
+                strftime(buff, sizeof buff, "%d\n%a" , &tm_day);
+                id(day4_date) = std::string(buff);
+                id(day4_cond) = id(weather_icon_map)[JSONDay["condition"].as<std::string>()];
+                id(day4_high) = JSONDay["temperature"].as<int>();
+                id(day4_low)  = JSONDay["templow"].as<int>();
+
+                JSONDay = response["response"]["weather.openweathermap"]["forecast"][4];
+                                strptime(JSONDay["datetime"].as<std::string>().c_str(), "%Y-%m-%dT%H:%M:%S+00:00", &tm_day);
+                strftime(buff, sizeof buff, "%d\n%a" , &tm_day);
+                id(day5_date) = std::string(buff);
+                id(day5_cond) = id(weather_icon_map)[JSONDay["condition"].as<std::string>()];
+                id(day5_high) = JSONDay["temperature"].as<int>();
+                id(day5_low)  = JSONDay["templow"].as<int>();
+            - logger.log:
+                      format: Tomorrow (%s) will be %s with a low of %i and a high of %i.
+                      args: [id(day1_date).c_str(), id(day1_cond).c_str(), id(day1_low), id(day1_high)]
+                      level: info
+            - lvgl.bar.update:
+                id: day1_bar
+                mode: RANGE
+                value: !lambda 'return id(day1_high);'
+                start_value: !lambda 'return id(day1_low);'
+            - lvgl.bar.update:
+                id: day2_bar
+                mode: RANGE
+                value: !lambda 'return id(day2_high);'
+                start_value: !lambda 'return id(day2_low);'
+            - lvgl.bar.update:
+                id: day3_bar
+                mode: RANGE
+                value: !lambda 'return id(day3_high);'
+                start_value: !lambda 'return id(day3_low);' 
+            - lvgl.bar.update:
+                id: day4_bar
+                mode: RANGE
+                value: !lambda 'return id(day4_high);'
+                start_value: !lambda 'return id(day4_low);'  
+            - lvgl.bar.update:
+                id: day5_bar
+                mode: RANGE
+                value: !lambda 'return id(day5_high);'
+                start_value: !lambda 'return id(day5_low);'
+            - lvgl.label.update:
+                id: day1_icon
+                text: !lambda 'return id(day1_cond).c_str();'
+            - lvgl.label.update:
+                id: day2_icon
+                text: !lambda 'return id(day2_cond).c_str();'
+            - lvgl.label.update:
+                id: day3_icon
+                text: !lambda 'return id(day3_cond).c_str();'
+            - lvgl.label.update:
+                id: day4_icon
+                text: !lambda 'return id(day4_cond).c_str();'
+            - lvgl.label.update:
+                id: day5_icon
+                text: !lambda 'return id(day5_cond).c_str();'
+            - lvgl.label.update:
+                id: day1_date_lvgl
+                text: !lambda 'return id(day1_date).c_str();'
+            - lvgl.label.update:
+                id: day2_date_lvgl
+                text: !lambda 'return id(day2_date).c_str();'
+            - lvgl.label.update:
+                id: day3_date_lvgl
+                text: !lambda 'return id(day3_date).c_str();'
+            - lvgl.label.update:
+                id: day4_date_lvgl
+                text: !lambda 'return id(day4_date).c_str();'
+            - lvgl.label.update:
+                id: day5_date_lvgl
+                text: !lambda 'return id(day5_date).c_str();'
+
 
 # ···················································································
 # :                                                                                 :
@@ -581,12 +730,12 @@ touchscreen:
     transform:
       mirror_x: true
       mirror_y: true
-    on_touch:
-      then:
-        - logger.log:
-            format: Touch %d at (%d, %d)
-            args: [touch.id, touch.x, touch.y]
-            level: info
+    # on_touch:
+    #   then:
+    #     - logger.log:
+    #         format: Touch %d at (%d, %d)
+    #         args: [touch.id, touch.x, touch.y]
+    #         level: info
 
 # 1.75" Round AMOLED Display Configuration (466x466 with CO5300 Driver)
 
@@ -620,18 +769,6 @@ lvgl:
     - main_display 
   touchscreens: 
     - my_touchscreen
-  on_swipe_right:
-    then:
-      - lambda: 'lv_indev_wait_release(lv_indev_get_act());'
-      - lvgl.page.next:        
-          animation: OUT_RIGHT
-          time: 300ms
-  on_swipe_left:
-    then:
-      - lambda: 'lv_indev_wait_release(lv_indev_get_act());'
-      - lvgl.page.previous:        
-          animation: OUT_RIGHT
-          time: 300ms
   pages:
     - id: Startup
       skip: true
@@ -724,6 +861,10 @@ lvgl:
             align: CENTER
 
     - id: clock_page
+      on_swipe_right:
+        - lvgl.page.next:        
+      on_swipe_left:
+        - lvgl.page.previous:
       widgets:
           - obj:
               height: 470
@@ -795,6 +936,257 @@ lvgl:
                   text_align: Center
                   text_font: font_responcse
                   y: 30
+
+    - id: forcast
+      on_swipe_right:
+        - lvgl.page.next:        
+      on_swipe_left:
+        - lvgl.page.previous:
+      bg_color: BLACK
+      widgets:
+        - line:
+            x: 0
+            y: 0
+            width: 466
+            height: 466
+            points:
+              - 66, 91
+              - 400, 91
+
+        - line:
+            x: 0
+            y: 0
+            width: 466
+            height: 466
+            points:
+              - 66, 143
+              - 400, 143
+
+        - line:
+            x: 0
+            y: 0
+            width: 466
+            height: 466
+            points:
+              - 66, 195
+              - 400, 195
+
+        - line:
+            x: 0
+            y: 0
+            width: 466
+            height: 466
+            points:
+              - 66, 242
+              - 400, 242
+
+        - label:
+            x: 40
+            y: 81
+            width: 40
+            height: 40
+            text: "90"
+
+        - label:
+            x: 40
+            y: 133
+            width: 40
+            height: 40
+            text: "70"
+
+        - label:
+            x: 40
+            y: 185
+            width: 40
+            height: 40
+            text: "50"
+
+        - label:
+            x: 40
+            y: 232
+            width: 40
+            height: 40
+            text: "32"
+
+        - bar:
+            id: day1_bar
+            mode: RANGE
+            x: 90
+            y: 65
+            width: 30
+            height: 260
+            value: 90
+            start_value: 32
+            min_value: 0
+            max_value: 100
+            indicator:
+              bg_color: 0x4F46E5
+            bg_color: 0x1F2937
+        - bar:
+            id: day2_bar
+            mode: RANGE
+            x: 154
+            y: 65
+            width: 30
+            height: 260
+            value: 90
+            start_value: 32
+            min_value: 0
+            max_value: 100
+            indicator:
+              bg_color: 0x4F46E5
+            bg_color: 0x1F2937
+
+        - bar:
+            id: day3_bar
+            mode: RANGE
+            x: 218
+            y: 65
+            width: 30
+            height: 260
+            value: 100
+            start_value: 0
+            min_value: 0
+            max_value: 100
+            indicator:
+              bg_color: 0x4F46E5
+            bg_color: 0x1F2937
+
+        - bar:
+            id: day4_bar
+            mode: RANGE
+            x: 282
+            y: 65
+            width: 30
+            height: 260
+            value: 70
+            start_value: 50
+            min_value: 0
+            max_value: 100
+            indicator:
+              bg_color: 0x4F46E5
+            bg_color: 0x1F2937
+
+        - bar:
+            id: day5_bar
+            mode: RANGE
+            x: 346
+            y: 65
+            width: 30
+            height: 260
+            value: 70
+            start_value: 50
+            min_value: 0
+            max_value: 100
+            indicator:
+              bg_color: 0x4F46E5
+            bg_color: 0x1F2937
+
+        - label:
+            id: day1_icon
+            x: 80
+            y: 325
+            width: 50
+            height: 50
+            text: "\U000F0597"
+            text_font: font_mdi_large
+            text_color: WHITE
+            text_align: CENTER
+
+        - label:
+            id: day2_icon
+            x: 144
+            y: 325
+            width: 50
+            height: 50
+            text: "\U000F0597"
+            text_font: font_mdi_large
+            text_color: WHITE
+            text_align: CENTER
+
+        - label:
+            id: day3_icon
+            x: 208
+            y: 325
+            width: 50
+            height: 50
+            text: "\U000F0597"
+            text_font: font_mdi_large
+            text_color: WHITE
+            text_align: CENTER
+
+        - label:
+            id: day4_icon
+            x: 272
+            y: 325
+            width: 50
+            height: 50
+            text: "\U000F0597"
+            text_font: font_mdi_large
+            text_color: WHITE
+            text_align: CENTER
+
+        - label:
+            id: day5_icon
+            x: 336
+            y: 325
+            width: 50
+            height: 50
+            text: "\U000F0597"
+            text_font: font_mdi_large
+            text_color: WHITE
+            text_align: CENTER
+
+        - label:
+            id: day1_date_lvgl
+            x: 80
+            y: 375
+            width: 50
+            height: 30
+            text: "23 Mon"
+            text_color: WHITE
+            text_align: CENTER
+
+        - label:
+            id: day2_date_lvgl
+            x: 144
+            y: 375
+            width: 50
+            height: 30
+            text: "24 Tues"
+            text_color: WHITE
+            text_align: CENTER
+
+        - label:
+            id: day3_date_lvgl
+            x: 208
+            y: 375
+            width: 50
+            height: 30
+            text: "25 Weds"
+            text_color: WHITE
+            text_align: CENTER
+
+        - label:
+            id: day4_date_lvgl
+            x: 272
+            y: 375
+            width: 50
+            height: 30
+            text: "26 Thurs"
+            text_color: WHITE
+            text_align: CENTER
+
+        - label:
+            id: day5_date_lvgl
+            x: 336
+            y: 375
+            width: 50
+            height: 30
+            text: "27\nFri"
+            text_color: WHITE
+            text_align: CENTER
+
 
 # ·······································································
 # :                                                                     :
@@ -1087,6 +1479,91 @@ globals:
     restore_value: yes
     initial_value: '"UTC0"'
 
+  - id: day1_date
+    type: std::string
+    initial_value: '""'
+  - id: day1_cond
+    type: std::string
+    initial_value: '""'
+  - id: day1_high
+    type: int
+    initial_value: "0"
+  - id: day1_low
+    type: int
+    initial_value: "0"
+
+  - id: day2_date
+    type: std::string
+    initial_value: '""'
+  - id: day2_cond
+    type: std::string
+    initial_value: '""'
+  - id: day2_high
+    type: int
+    initial_value: "0"
+  - id: day2_low
+    type: int
+    initial_value: "0"
+
+  - id: day3_date
+    type: std::string
+    initial_value: '""'
+  - id: day3_cond
+    type: std::string
+    initial_value: '""'
+  - id: day3_high
+    type: int
+    initial_value: "0"
+  - id: day3_low
+    type: int
+    initial_value: "0"
+
+  - id: day4_date
+    type: std::string
+    initial_value: '""'
+  - id: day4_cond
+    type: std::string
+    initial_value: '""'
+  - id: day4_high
+    type: int
+    initial_value: "0"
+  - id: day4_low
+    type: int
+    initial_value: "0"
+
+  - id: day5_date
+    type: std::string
+    initial_value: '""'
+  - id: day5_cond
+    type: std::string
+    initial_value: '""'
+  - id: day5_high
+    type: int
+    initial_value: "0"
+  - id: day5_low
+    type: int
+    initial_value: "0"
+
+  - id: weather_icon_map
+    type: std::map<std::string, std::string>
+    initial_value: >
+      { {"clear-night", "\U000F0594"},
+        {"cloudy", "\U000F0590"},
+        {"exceptional", "\U000F0F2F"}, 
+        {"fog", "\U000F0591"}, 
+        {"hail", "\U000F0592"}, 
+        {"lightning", "\U000F0593"}, 
+        {"lightning-rainy", "\U000F067E"}, 
+        {"partlycloudy", "\U000F0595"}, 
+        {"pouring", "\U000F0596"}, 
+        {"rainy", "\U000F0597"}, 
+        {"snowy", "\U000F0598"},
+        {"snowy-rainy", "\U000F067F"},
+        {"sunny", "\U000F0599"},
+        {"windy", "\U000F059D"},
+        {"windy-variant", "\U000F059E"}
+      }
+
 button:
   - platform: factory_reset
     id: factory_reset_btn
@@ -1190,9 +1667,6 @@ script:
 # :  |____/ \___|_|  |_| .__/ \__|         |____/|_|  \__,_| \_/\_/   |____/|_|___/ .__/|_|\__,_|\__, |  :
 # :                    |_|                                                        |_|            |___/   :
 # ········································································································
-# @TODO - This should be based on a timer/loop and check if any action is needed rather than wait for the call from various events
-# @TODO - States shoudl be system based states, keyed to VA.  It's ok if the system has duplicated states, but the system is going to have MORE
-# @TODO - Case statement
   - id: draw_display
     then:
       - lambda: |
@@ -1482,6 +1956,42 @@ font:
     size: 16
     glyphsets:
       - ${font_glyphsets}
+
+  - file: 'https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/7.4.47/fonts/materialdesignicons-webfont.ttf'
+    id: font_mdi_large
+    size: 40
+    glyphs: [
+      "\U000F0590", # mdi-weather-cloudy
+      "\U000F0F2F", # mdi-weather-cloudy-alert
+      "\U000F0E6E", # mdi-weather-cloudy-arrow-right
+      "\U000F0591", # mdi-weather-fog
+      "\U000F0592", # mdi-weather-hail
+      "\U000F0F30", # mdi-weather-hazy
+      "\U000F0898", # mdi-weather-hurricane
+      "\U000F0593", # mdi-weather-lightning
+      "\U000F067E", # mdi-weather-lightning-rainy
+      "\U000F0594", # mdi-weather-night
+      "\U000F0F31", # mdi-weather-night-partly-cloudy
+      "\U000F0595", # mdi-weather-partly-cloudy
+      "\U000F0F32", # mdi-weather-partly-lightning
+      "\U000F0F33", # mdi-weather-partly-rainy
+      "\U000F0F34", # mdi-weather-partly-snowy
+      "\U000F0F35", # mdi-weather-partly-snowy-rainy
+      "\U000F0596", # mdi-weather-pouring
+      "\U000F0597", # mdi-weather-rainy
+      "\U000F0598", # mdi-weather-snowy
+      "\U000F0F36", # mdi-weather-snowy-heavy
+      "\U000F067F", # mdi-weather-snowy-rainy
+      "\U000F0599", # mdi-weather-sunny
+      "\U000F0F37", # mdi-weather-sunny-alert
+      "\U000F14E4", # mdi-weather-sunny-off
+      "\U000F059A", # mdi-weather-sunset
+      "\U000F059B", # mdi-weather-sunset-down
+      "\U000F059C", # mdi-weather-sunset-up
+      "\U000F0F38", # mdi-weather-tornado
+      "\U000F059D", # mdi-weather-windy
+      "\U000F059E", # mdi-weather-windy-variant
+    ]
 
 # ·······································································
 # :                                                                     :
