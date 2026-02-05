@@ -479,26 +479,71 @@ interval:
             - lvgl.bar.update:
                 id: day1_bar
                 mode: RANGE
+                indicator:
+                  bg_color: !lambda |-
+                    int temp = id(day1_high);
+                    if (temp < 40) return lv_color_hex(0x4D93DD);
+                    if (temp < 50) return lv_color_hex(0x4BDCE3);
+                    if (temp < 60) return lv_color_hex(0xA1EDDE);
+                    if (temp < 70) return lv_color_hex(0xEFF2B1);
+                    if (temp < 80) return lv_color_hex(0xFFD512);
+                    return lv_color_hex(0xF53B3B);
                 value: !lambda 'return id(day1_high);'
                 start_value: !lambda 'return id(day1_low);'
             - lvgl.bar.update:
                 id: day2_bar
                 mode: RANGE
+                indicator:
+                  bg_color: !lambda |-
+                    int temp = id(day2_high);
+                    if (temp < 40) return lv_color_hex(0x4D93DD);
+                    if (temp < 50) return lv_color_hex(0x4BDCE3);
+                    if (temp < 60) return lv_color_hex(0xA1EDDE);
+                    if (temp < 70) return lv_color_hex(0xEFF2B1);
+                    if (temp < 80) return lv_color_hex(0xFFD512);
+                    return lv_color_hex(0xF53B3B);
                 value: !lambda 'return id(day2_high);'
                 start_value: !lambda 'return id(day2_low);'
             - lvgl.bar.update:
                 id: day3_bar
                 mode: RANGE
+                indicator:
+                  bg_color: !lambda |-
+                    int temp = id(day3_high);
+                    if (temp < 40) return lv_color_hex(0x4D93DD);
+                    if (temp < 50) return lv_color_hex(0x4BDCE3);
+                    if (temp < 60) return lv_color_hex(0xA1EDDE);
+                    if (temp < 70) return lv_color_hex(0xEFF2B1);
+                    if (temp < 80) return lv_color_hex(0xFFD512);
+                    return lv_color_hex(0xF53B3B);
                 value: !lambda 'return id(day3_high);'
                 start_value: !lambda 'return id(day3_low);' 
             - lvgl.bar.update:
                 id: day4_bar
                 mode: RANGE
+                indicator:
+                  bg_color: !lambda |-
+                    int temp = id(day4_high);
+                    if (temp < 40) return lv_color_hex(0x4D93DD);
+                    if (temp < 50) return lv_color_hex(0x4BDCE3);
+                    if (temp < 60) return lv_color_hex(0xA1EDDE);
+                    if (temp < 70) return lv_color_hex(0xEFF2B1);
+                    if (temp < 80) return lv_color_hex(0xFFD512);
+                    return lv_color_hex(0xF53B3B);
                 value: !lambda 'return id(day4_high);'
                 start_value: !lambda 'return id(day4_low);'  
             - lvgl.bar.update:
                 id: day5_bar
                 mode: RANGE
+                indicator:
+                  bg_color: !lambda |-
+                    int temp = id(day5_high);
+                    if (temp < 40) return lv_color_hex(0x4D93DD);
+                    if (temp < 50) return lv_color_hex(0x4BDCE3);
+                    if (temp < 60) return lv_color_hex(0xA1EDDE);
+                    if (temp < 70) return lv_color_hex(0xEFF2B1);
+                    if (temp < 80) return lv_color_hex(0xFFD512);
+                    return lv_color_hex(0xF53B3B);
                 value: !lambda 'return id(day5_high);'
                 start_value: !lambda 'return id(day5_low);'
             - lvgl.label.update:
@@ -1589,7 +1634,6 @@ button:
 # :                                           :
 # ·············································
 script:
-
   - id: publish_current_time
     then:
       - lambda: |-
