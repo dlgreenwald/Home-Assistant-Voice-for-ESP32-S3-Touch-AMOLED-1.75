@@ -4,3 +4,11 @@ secrets.yaml
 # Ignore ESPHome build and cache
 .esphome/
 *.log
+
+# Ignore venv directories
+/bin/
+/include/
+/lib/
+/lib64
+/pyvenv.cfg
+
