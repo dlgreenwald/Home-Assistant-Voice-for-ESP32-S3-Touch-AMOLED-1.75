@@ -1,0 +1,30 @@
+esphome:
+  name: sdl
+
+packages:
+  lvgl_forecast: !include widgets/forecast.yaml
+  lvgl_voiceassistant: !include widgets/voiceassistant.yaml
+  lvgl_clock: !include widgets/clock.yaml
+
+host:
+
+display:
+  - platform: sdl
+    #show_test_card: true
+    dimensions:
+      width: 466
+      height: 466
+    auto_clear_enabled: false 
+
+touchscreen:
+  platform: sdl
+
+api:
+
+logger:
+  level: DEBUG
+
+lvgl:
+  #log_level: INFO
+  color_depth: 16
+  bg_color: 0x000000
