@@ -1,0 +1,307 @@
+# substitutions:
+#   loading_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/loading_320_240.png
+#   idle_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/idle_320_240.png
+#   listening_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/listening_320_240.png
+#   thinking_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/thinking_320_240.png
+#   replying_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/replying_320_240.png
+#   timer_finished_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/timer_finished_320_240.png
+#   mute_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/error_320_240.png
+#   error_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/error_320_240.png
+#   error_no_wifi_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/error_box_illustrations/error-no-wifi.png
+#   error_no_ha_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/error_box_illustrations/error-no-ha.png
+
+# globals:
+#   - id: init_in_progress
+#     type: bool
+#     restore_value: false
+#     initial_value: "true"
+
+# image:
+#   - file: ${loading_illustration_file}
+#     id: casita_initializing
+#     resize: 466x466
+#     type: RGB565
+#     transparency: alpha_channel
+
+#   - file: ${idle_illustration_file}
+#     id: casita_idle
+#     resize: 466x466
+#     type: RGB565
+#     transparency: alpha_channel
+
+#   - file: ${listening_illustration_file}
+#     id: casita_listening
+#     resize: 466x466
+#     type: RGB565
+#     transparency: alpha_channel
+
+#   - file: ${thinking_illustration_file}
+#     id: casita_thinking
+#     resize: 466x466
+#     type: RGB565
+#     transparency: alpha_channel
+
+#   - file: ${replying_illustration_file}
+#     id: casita_replying
+#     resize: 466x466
+#     type: RGB565
+#     transparency: alpha_channel
+
+#   - file: ${timer_finished_illustration_file}
+#     id: casita_timer_finished
+#     resize: 466x466
+#     type: RGB565
+#     transparency: alpha_channel
+
+#   - file: ${mute_illustration_file}
+#     id: casita_muted
+#     resize: 466x466
+#     type: RGB565
+#     transparency: alpha_channel
+
+#   - file: ${error_no_ha_file}
+#     id: error_no_ha
+#     resize: 466x466
+#     type: RGB565
+#     transparency: alpha_channel
+
+#   - file: ${error_no_wifi_file}
+#     id: error_no_wifi
+#     resize: 466x466
+#     type: RGB565
+#     transparency: alpha_channel
+
+#   - file: ${error_illustration_file}
+#     id: casita_error
+#     resize: 466x466
+#     type: RGB565
+#     transparency: alpha_channel
+
+# script:
+#   - id: draw_display
+#     then:
+#       - lambda: |
+#           id(check_if_timers_active).execute();
+#           if (id(is_timer_active)){
+#             id(fetch_first_active_timer).execute();
+#           }
+#           if(id(init_in_progress)) {
+#             //During Init window, only display startup screen.
+#             id(draw_display_initializing).execute();
+#           } else if (id(voice_assistant_phase) == ${voice_assist_noWifi_phase_id}) {
+#             //Outside of init window, draw no wifi screen
+#             id(draw_display_no_wifi_connection_state).execute();
+#           } else if (id(voice_assistant_phase) == ${voice_assist_noHA_phase_id}) {
+#             //Outside of init window, draw no HA connection screen
+#             id(draw_display_no_ha_connection_state).execute();
+#           } else if (id(voice_assistant_phase) == ${voice_assist_noVA_phase_id}) {
+#             //Outside of init window, draw no HA connection screen
+#             id(draw_display_no_va_connection_state).execute(); 
+#           } else if (id(timer_ringing).state) {
+#             id(draw_display_timer_ringing).execute();
+#           } else if (id(voice_assistant_phase) == ${voice_assist_waiting_for_command_phase_id}) {
+#             id(draw_display_voice_assistant_waiting_for_command_phase).execute();
+#           } else if (id(voice_assistant_phase) == ${voice_assist_listening_for_command_phase_id}) {
+#             id(draw_display_voice_assistant_listening_for_command_phase).execute();
+#           } else if (id(voice_assistant_phase) == ${voice_assist_thinking_phase_id}) {
+#             id(draw_display_voice_assistant_thinking_phase).execute();
+#           } else if (id(voice_assistant_phase) == ${voice_assist_replying_phase_id}) {
+#             id(draw_display_voice_assistant_replying_phase).execute();
+#           } else if (id(voice_assistant_phase) == ${voice_assist_error_phase_id}) {
+#             id(draw_display_voice_assistant_error_phase).execute();
+#           } else if (id(voice_assistant_phase) == ${voice_assist_not_ready_phase_id}) {
+#             id(draw_display_voice_assistant_not_ready_phase).execute();
+#           } else if (id(is_timer_active)) {
+#             id(draw_display_timer_ticking).execute();
+#           } else if (id(alarm_on).state) {
+#             id(draw_display_alarm_active).execute();
+#           } else if (id(voice_assistant_phase) == ${voice_assist_idle_phase_id}) {
+#             id(draw_display_voice_assistant_idle_phase).execute();
+#           }
+
+#   # Script executed during Improv BLE
+#   # Warm White slow pulse
+#   - id: draw_display_initializing
+#     then:
+#       - lvgl.page.show: Startup
+#       # - component.update: main_display
+
+#   # Script executed when the device has no Wifi connection after initial init period      
+#   - id: draw_display_no_wifi_connection_state
+#     then:
+#       - lvgl.page.show: No_Wifi
+#       - component.update: main_display   
+
+#   # Script executed when the device has no connection to Home Assistant
+#   # Red slow pulse (This will be visible during HA updates for example)
+#   - id: draw_display_no_ha_connection_state
+#     then:
+#       - lvgl.page.show: No_HA
+#       - component.update: main_display
+
+#   # Script executed when the device has no connection to Home Assistant
+#   # Red slow pulse (This will be visible during HA updates for example)
+#   - id: draw_display_no_va_connection_state
+#     then:
+#       - lvgl.page.show: No_HA
+#       - component.update: main_display
+
+#   # Script executed when the timer is ringing, to control the LEDs
+#   # The LED blinks green.
+#   - id: draw_display_timer_ringing
+#     then:
+#       - lvgl.page.show: VA_Timer
+#       - component.update: main_display
+
+#   # Script executed when the timer is ticking, to control the LEDs
+#   # Slow dim while pulse.
+#   # Need to create a page for this
+#   - id: draw_display_timer_ticking
+#     then:
+
+#   # Script executed when the alarm is active
+#   # The LED turns on dim green
+#   # Page needs created for this
+#   - id: draw_display_alarm_active
+#     then:
+
+#   # Script executed when the voice assistant is idle (waiting for a wake word)
+#   # Display Idle Page
+#   - id: draw_display_voice_assistant_idle_phase
+#     then:
+#       - logger.log: "Show Clock"
+#       - lvgl.page.show: clock_page
+#       - component.update: main_display
+
+#   # Script executed when the voice assistant is waiting for a command (After the wake word)
+#   # Display Listening Page
+#   - id: draw_display_voice_assistant_waiting_for_command_phase
+#     then:
+#       - lvgl.page.show: VA_Listening
+#       - component.update: main_display
+
+#   # Script executed when the voice assistant is listening to a command
+#   # Display Listening Page
+#   - id: draw_display_voice_assistant_listening_for_command_phase
+#     then:
+#       - lvgl.page.show: VA_Listening
+#       - component.update: main_display
+
+#   # Script executed when the voice assistant is thinking to a command
+#   # Fast purple pulse
+#   - id: draw_display_voice_assistant_thinking_phase
+#     then:
+#       - lvgl.page.show: VA_Thinking
+#       - component.update: main_display
+
+#   # Script executed when the voice assistant is replying to a command
+#   # Slow cyan pulse
+#   - id: draw_display_voice_assistant_replying_phase
+#     then:
+#       - lvgl.page.show: VA_Replying
+#       - component.update: main_display
+
+#   # Script executed when the voice assistant is in error
+#   # Fast Red Pulse
+#   - id: draw_display_voice_assistant_error_phase
+#     then:
+#       - lvgl.page.show: VA_Error
+#       - component.update: main_display
+
+#   # Script executed when the voice assistant is not ready
+#   - id: draw_display_voice_assistant_not_ready_phase
+#     then:
+#       - lvgl.page.show: VA_Error
+#       - component.update: main_display
+
+# lvgl:
+#     pages:
+#     - id: Startup
+#       skip: true
+#       bg_color: BLACK
+#       widgets:
+#         - image:
+#             src: casita_initializing
+#             align: CENTER
+#         - label:
+#             text: Home Assistant
+#             text_color: WHITE
+#             align: CENTER
+#             y: 100
+
+#     - id: No_Wifi
+#       skip: true
+#       bg_color: BLACK
+#       widgets:
+#         - image:
+#             src: error_no_wifi
+#             align: CENTER
+
+#     - id: No_HA
+#       skip: true
+#       bg_color: BLACK
+#       widgets:
+#         - image:
+#             src: error_no_ha
+#             align: CENTER
+
+#     - id: VA_Idle
+#       skip: true
+#       bg_color: BLACK
+#       widgets:
+#         - image:
+#             src: casita_idle
+#             align: CENTER
+#         - label:
+#             text: Home Assistant
+#             text_color: WHITE
+#             align: CENTER
+#             y: 100
+
+#     - id: VA_Thinking
+#       skip: true
+#       bg_color: 0xf2f4f9
+#       widgets:
+#         - image:
+#             src: casita_thinking
+#             align: CENTER
+
+#     - id: VA_Listening
+#       skip: true
+#       bg_color: 0xf2f4f9
+#       widgets:
+#         - image:
+#             src: casita_listening
+#             align: CENTER
+
+#     - id: VA_Replying
+#       skip: true
+#       bg_color: 0xf2f4f9
+#       widgets:
+#         - image:
+#             src: casita_replying
+#             align: CENTER
+
+#     - id: VA_Error
+#       skip: true
+#       bg_color: BLACK
+#       widgets:
+#         - image:
+#             src: casita_error
+#             align: CENTER
+
+#     - id: VA_Muted # Should this be a icon on the top page?
+#       skip: true
+#       bg_color: 0xf2f4f9
+#       widgets:
+#         - image:
+#             src: casita_muted
+#             align: CENTER
+
+#     - id: VA_Timer
+#       skip: true
+#       bg_color: 0xf2f4f9
+#       widgets:
+#         - image:
+#             src: casita_timer_finished
+#             align: CENTER

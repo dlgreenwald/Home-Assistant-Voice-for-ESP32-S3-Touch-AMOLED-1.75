@@ -1,0 +1,50 @@
+api:
+  id: api_id
+  actions:
+    - action: start_va
+      then:
+        - voice_assistant.start
+    - action: stop_va
+      then:
+        - voice_assistant.stop
+    - action: set_alarm_time
+      variables:
+        alarm_time_hh_mm: string
+      then:
+        - lambda: |-
+            if (alarm_time_hh_mm.length() == 5 &&
+              isdigit(alarm_time_hh_mm[0]) && isdigit(alarm_time_hh_mm[1]) &&
+              isdigit(alarm_time_hh_mm[3]) && isdigit(alarm_time_hh_mm[4])) {
+                id(alarm_time).publish_state(alarm_time_hh_mm);
+                id(saved_alarm_time) = alarm_time_hh_mm;
+              }
+    - action: set_time_zone
+      variables:
+        posix_time_zone: string
+      then:
+        - lambda: |-
+            setenv("TZ", posix_time_zone.c_str(), 1);
+            tzset();
+            id(saved_time_zone) = posix_time_zone;
+            id(publish_current_time).execute();
+  encryption:
+  on_client_connected:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_noVA_phase_id};
+  on_client_disconnected:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_noHA_phase_id};
+
+# Time sync from Home Assistant
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    on_time:
+      - minutes: '*'
+        seconds: 0 
+        then:
+          - script.execute: time_update
+    on_time_sync:
+      - script.execute: publish_current_time
+
+http_request:
+# Uncomment this, if you have problems with text-to-speech because of Home Assistant HTTPS internal URL
+#   verify_ssl: false
