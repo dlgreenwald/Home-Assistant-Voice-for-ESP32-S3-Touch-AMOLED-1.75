@@ -52,6 +52,15 @@ Tested with:
 
 ---
 
+SDL Development Quickstart
+1. Clone this repo and cd into it
+2. Run `python3 -m venv .`
+3. Run `source ./bin/activate`
+4. Run `esphome run sdl.yaml`
+
+More details here: https://community.home-assistant.io/t/how-to-virtual-esphome-device-and-development-using-windows-work-in-progress/802669
+---
+
 ## 🔐 Security Notes
 - Wi-Fi credentials and OTA passwords are stored in `secrets.yaml`
 - **Do not commit real secrets**
