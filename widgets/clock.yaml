@@ -17,7 +17,7 @@ font:
       family: ${font_family}
       weight: 300
     id: font_responcse
-    size: 15
+    size: 45
     glyphsets:
       - ${font_glyphsets}
   - file:
@@ -45,12 +45,26 @@ lvgl:
               bg_color: Black
               border_width: 0  
               widgets:
+              - label:
+                  id: day_label
+                  align: Center
+                  text_color: Red
+                  text_align: Center
+                  text_font: font_responcse
+                  y: -50
+              - label:
+                  id: date_label
+                  align: Center
+                  text_color: Red
+                  text_align: Center
+                  text_font: font_responcse
+                  y: 50
               - meter:
                   height: 100%
                   width: 100%
                   align: center
                   bg_color: Black
-
+                  bg_opa: TRANSP 
                   scales:
                     # Minor ticks
                     - ticks:
@@ -92,18 +106,3 @@ lvgl:
                             width: 4
                             color: White
                             r_mod: -40
-                   
-              - label:
-                  id: day_label
-                  align: Center
-                  text_color: Red
-                  text_align: Center
-                  text_font: font_responcse
-                  y: -30
-              - label:
-                  id: date_label
-                  align: Center
-                  text_color: Red
-                  text_align: Center
-                  text_font: font_responcse
-                  y: 30
