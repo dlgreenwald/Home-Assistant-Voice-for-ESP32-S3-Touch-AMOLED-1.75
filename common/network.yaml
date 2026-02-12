@@ -4,7 +4,7 @@ network:
 ota:
   - platform: esphome
     id: ota_esphome
-    # password: !secret ota_password
+    password: !secret ota_password
 
 wifi:
   id: wifi_id
