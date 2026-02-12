@@ -34,10 +34,6 @@
 #   * Thermostat Control
 
 #TODO
-# Forcast
-# * move temp labels up 10
-# * add dailiy forcast date string "24\nWeds"
-# * update the icons
 # Clock
 # *  larger text on date in clock
 #
@@ -59,6 +55,7 @@ packages:
   lvgl_forecast: !include widgets/forecast.yaml
   lvgl_voiceassistant: !include widgets/voiceassistant.yaml
   lvgl_clock: !include widgets/clock.yaml
+  lvgl_weather: !include widgets/weather.yaml
 
 substitutions:
   name: "waveshare-s3-amoled-175"
@@ -151,6 +148,10 @@ esp32:
 psram:
   mode: octal
   speed: 80MHz
+
+api:
+  encryption:
+    key: !secret amoled_key
 
 logger:
   level: DEBUG
