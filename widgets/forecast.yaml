@@ -1,7 +1,9 @@
 interval:
-  - interval: 1h
+  - interval: 2h
     startup_delay: 30s
     then:
+      - wait_until:
+          api.connected:
       - logger.log: "Preparing to fetch weather forcast"
       - homeassistant.action:
           action: weather.get_forecasts
@@ -10,53 +12,51 @@ interval:
             type: daily
           capture_response: true
           on_success:
+            - logger.log: "parsing weather forcast"
             - lambda: |-
                 struct tm tm_day; //2026-02-05T17:00:00+00:00
                 char buff[7];
 
-                JsonObjectConst JSONDay = response["response"]["weather.openweathermap"]["forecast"][0];
+                JsonObjectConst JSONDay = response["response"]["weather.openweathermap"]["forecast"][1];
                 strptime(JSONDay["datetime"].as<std::string>().c_str(), "%Y-%m-%dT%H:%M:%S+00:00", &tm_day);
                 strftime(buff, sizeof buff, "%d\n%a" , &tm_day);
                 id(day1_date) = std::string(buff);
-                id(day1_cond) = id(weather_icon_map)[JSONDay["condition"].as<std::string>()];
+                id(day1_cond) = id(forcast_icon_map)[JSONDay["condition"].as<std::string>()];
                 id(day1_high) = JSONDay["temperature"].as<int>();
                 id(day1_low)  = JSONDay["templow"].as<int>();
 
-                JSONDay = response["response"]["weather.openweathermap"]["forecast"][1];
+                JSONDay = response["response"]["weather.openweathermap"]["forecast"][2];
                 strptime(JSONDay["datetime"].as<std::string>().c_str(), "%Y-%m-%dT%H:%M:%S+00:00", &tm_day);
                 strftime(buff, sizeof buff, "%d\n%a" , &tm_day);
                 id(day2_date) = std::string(buff);
-                id(day2_cond) = id(weather_icon_map)[JSONDay["condition"].as<std::string>()];
+                id(day2_cond) = id(forcast_icon_map)[JSONDay["condition"].as<std::string>()];
                 id(day2_high) = JSONDay["temperature"].as<int>();
                 id(day2_low)  = JSONDay["templow"].as<int>();
-
-                JSONDay = response["response"]["weather.openweathermap"]["forecast"][2];
-                                strptime(JSONDay["datetime"].as<std::string>().c_str(), "%Y-%m-%dT%H:%M:%S+00:00", &tm_day);
-                strftime(buff, sizeof buff, "%d\n%a" , &tm_day);
-                id(day3_date) = std::string(buff);
-                id(day3_cond) = id(weather_icon_map)[JSONDay["condition"].as<std::string>()];
-                id(day3_high) = JSONDay["temperature"].as<int>();
-                id(day3_low)  = JSONDay["templow"].as<int>();
 
                 JSONDay = response["response"]["weather.openweathermap"]["forecast"][3];
                                 strptime(JSONDay["datetime"].as<std::string>().c_str(), "%Y-%m-%dT%H:%M:%S+00:00", &tm_day);
                 strftime(buff, sizeof buff, "%d\n%a" , &tm_day);
-                id(day4_date) = std::string(buff);
-                id(day4_cond) = id(weather_icon_map)[JSONDay["condition"].as<std::string>()];
-                id(day4_high) = JSONDay["temperature"].as<int>();
-                id(day4_low)  = JSONDay["templow"].as<int>();
+                id(day3_date) = std::string(buff);
+                id(day3_cond) = id(forcast_icon_map)[JSONDay["condition"].as<std::string>()];
+                id(day3_high) = JSONDay["temperature"].as<int>();
+                id(day3_low)  = JSONDay["templow"].as<int>();
 
                 JSONDay = response["response"]["weather.openweathermap"]["forecast"][4];
                                 strptime(JSONDay["datetime"].as<std::string>().c_str(), "%Y-%m-%dT%H:%M:%S+00:00", &tm_day);
                 strftime(buff, sizeof buff, "%d\n%a" , &tm_day);
+                id(day4_date) = std::string(buff);
+                id(day4_cond) = id(forcast_icon_map)[JSONDay["condition"].as<std::string>()];
+                id(day4_high) = JSONDay["temperature"].as<int>();
+                id(day4_low)  = JSONDay["templow"].as<int>();
+
+                JSONDay = response["response"]["weather.openweathermap"]["forecast"][5];
+                                strptime(JSONDay["datetime"].as<std::string>().c_str(), "%Y-%m-%dT%H:%M:%S+00:00", &tm_day);
+                strftime(buff, sizeof buff, "%d\n%a" , &tm_day);
                 id(day5_date) = std::string(buff);
-                id(day5_cond) = id(weather_icon_map)[JSONDay["condition"].as<std::string>()];
+                id(day5_cond) = id(forcast_icon_map)[JSONDay["condition"].as<std::string>()];
                 id(day5_high) = JSONDay["temperature"].as<int>();
                 id(day5_low)  = JSONDay["templow"].as<int>();
-            - logger.log:
-                      format: Tomorrow (%s) will be %s with a low of %i and a high of %i.
-                      args: [id(day1_date).c_str(), id(day1_cond).c_str(), id(day1_low), id(day1_high)]
-                      level: info
+            - logger.log: "weather forcast fetch complete"
             - lvgl.bar.update:
                 id: day1_bar
                 mode: RANGE
@@ -157,6 +157,7 @@ interval:
             - lvgl.label.update:
                 id: day5_date_lvgl
                 text: !lambda 'return id(day5_date).c_str();'
+            - logger.log: "Forecast Rendered"
 
 lvgl:
   pages:
@@ -476,7 +477,7 @@ globals:
     type: int
     initial_value: "0"
 
-  - id: weather_icon_map
+  - id: forcast_icon_map
     type: std::map<std::string, std::string>
     initial_value: >
       { {"clear-night", "\U000F0594"},

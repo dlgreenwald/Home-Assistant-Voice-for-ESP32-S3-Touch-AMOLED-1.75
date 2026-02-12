@@ -5,6 +5,7 @@ packages:
   lvgl_forecast: !include widgets/forecast.yaml
   lvgl_voiceassistant: !include widgets/voiceassistant.yaml
   lvgl_clock: !include widgets/clock.yaml
+  lvgl_weather: !include widgets/weather.yaml
 
 host:
 

@@ -1,0 +1,209 @@
+interval:
+  - interval: 1h
+    startup_delay: 60s
+    then:
+      - wait_until:
+          api.connected:
+      - logger.log: "Preparing to fetch current high and low"
+      - homeassistant.action:
+          action: weather.get_forecasts
+          data:
+            entity_id: weather.openweathermap
+            type: daily
+          capture_response: true
+          on_success:
+            - lambda: |-
+                JsonObjectConst JSONDay = response["response"]["weather.openweathermap"]["forecast"][0];
+                id(current_high) = JSONDay["temperature"].as<std::string>();
+                id(current_low)  = JSONDay["templow"].as<std::string>();
+            - logger.log: "Current high and low fetch complete"
+            - lvgl.label.update:
+                id: max_label
+                text: !lambda 'return id(current_high).c_str();'
+            - lvgl.label.update:
+                id: min_label
+                text: !lambda 'return id(current_low).c_str();'
+            - logger.log: "High and Low Conditions Rendered"
+  - interval: 15min
+    startup_delay: 45s
+    then:
+      - wait_until:
+          api.connected:
+      - logger.log: "Preparing to fetch current conditions"
+      - homeassistant.action:
+          action: weather.get_forecasts
+          data:
+            entity_id: weather.openweathermap
+            type: hourly
+          capture_response: true
+          on_success:
+            - lambda: |-
+                JsonObjectConst JSONDay = response["response"]["weather.openweathermap"]["forecast"][0];
+                id(current_temp) = JSONDay["temperature"].as<int>();
+                id(current_temp_str) = JSONDay["temperature"].as<std::string>();
+                id(current_cond) = id(weather_icon_map)[JSONDay["condition"].as<std::string>()];
+            - logger.log: "Current conditions fetch complete"
+            - lvgl.arc.update:
+                id: temp_arc
+                indicator:
+                  bg_color: !lambda |-
+                    int temp = id(current_temp);
+                    if (temp < 40) return lv_color_hex(0x4D93DD);
+                    if (temp < 50) return lv_color_hex(0x4BDCE3);
+                    if (temp < 60) return lv_color_hex(0xA1EDDE);
+                    if (temp < 70) return lv_color_hex(0xEFF2B1);
+                    if (temp < 80) return lv_color_hex(0xFFD512);
+                    return lv_color_hex(0xF53B3B);
+                value: !lambda 'return id(current_temp);'
+            - lvgl.label.update:
+                id: cond_icon
+                text: !lambda 'return id(current_cond).c_str();'
+            - lvgl.label.update:
+                id: temp_label
+                text: !lambda 'return id(current_temp_str).c_str();'
+            - logger.log: "Current Conditions Rendered"
+
+lvgl:
+  pages:
+    - id: weather_page
+      bg_color: BLACK
+      on_swipe_right:
+        - lvgl.page.next:        
+      on_swipe_left:
+        - lvgl.page.previous:
+      widgets:
+        - arc:
+            id: temp_arc
+            x: 33
+            y: 33
+            width: 400
+            height: 400
+            value: 50
+            min_value: 0
+            max_value: 100
+            start_angle: 135
+            end_angle: 45
+            arc_width: 16
+            arc_opa: 25%
+            arc_rounded: true
+            indicator:
+              arc_width: 16
+              arc_opa: 100%
+            knob:
+              radius: 15
+
+        - label:
+            id: temp_label
+            x: 183
+            y: 275
+            width: 100
+            height: 100
+            text: "72"
+            text_align: CENTER
+            text_font: montserrat_48
+            text_color: WHITE
+            text_line_space: 0
+
+        - label:
+            id: cond_icon
+            x: 120
+            y: 50
+            width: 225
+            height: 225
+            text: "\U000F0597"
+            text_font: font_mdi_xlarge
+            text_color: WHITE
+            text_align: CENTER
+
+        - label:
+            id: min_label
+            x: 270
+            y: 325
+            width: 50
+            height: 50
+            text: "60"
+            text_color: WHITE
+            text_align: CENTER
+
+        - label:
+            id: max_label
+            x: 270
+            y: 275
+            width: 50
+            height: 50
+            text: "80"
+            text_color: WHITE
+            text_align: CENTER
+
+globals:
+  - id: current_high
+    type: std::string
+    initial_value: '""'
+  - id: current_low
+    type: std::string
+    initial_value: '""'
+  - id: current_cond
+    type: std::string
+    initial_value: '""'
+  - id: current_temp
+    type: int
+  - id: current_temp_str
+    type: std::string
+    initial_value: '""'
+
+  - id: weather_icon_map
+    type: std::map<std::string, std::string>
+    initial_value: >
+      { {"clear-night", "\U000F0594"},
+        {"cloudy", "\U000F0590"},
+        {"exceptional", "\U000F0F2F"}, 
+        {"fog", "\U000F0591"}, 
+        {"hail", "\U000F0592"}, 
+        {"lightning", "\U000F0593"}, 
+        {"lightning-rainy", "\U000F067E"}, 
+        {"partlycloudy", "\U000F0595"}, 
+        {"pouring", "\U000F0596"}, 
+        {"rainy", "\U000F0597"}, 
+        {"snowy", "\U000F0598"},
+        {"snowy-rainy", "\U000F067F"},
+        {"sunny", "\U000F0599"},
+        {"windy", "\U000F059D"},
+        {"windy-variant", "\U000F059E"}
+      }
+
+font:
+  - file: 'https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/7.4.47/fonts/materialdesignicons-webfont.ttf'
+    id: font_mdi_xlarge
+    size: 225
+    glyphs: [
+      "\U000F0590", # mdi-weather-cloudy
+      "\U000F0F2F", # mdi-weather-cloudy-alert
+      "\U000F0E6E", # mdi-weather-cloudy-arrow-right
+      "\U000F0591", # mdi-weather-fog
+      "\U000F0592", # mdi-weather-hail
+      "\U000F0F30", # mdi-weather-hazy
+      "\U000F0898", # mdi-weather-hurricane
+      "\U000F0593", # mdi-weather-lightning
+      "\U000F067E", # mdi-weather-lightning-rainy
+      "\U000F0594", # mdi-weather-night
+      "\U000F0F31", # mdi-weather-night-partly-cloudy
+      "\U000F0595", # mdi-weather-partly-cloudy
+      "\U000F0F32", # mdi-weather-partly-lightning
+      "\U000F0F33", # mdi-weather-partly-rainy
+      "\U000F0F34", # mdi-weather-partly-snowy
+      "\U000F0F35", # mdi-weather-partly-snowy-rainy
+      "\U000F0596", # mdi-weather-pouring
+      "\U000F0597", # mdi-weather-rainy
+      "\U000F0598", # mdi-weather-snowy
+      "\U000F0F36", # mdi-weather-snowy-heavy
+      "\U000F067F", # mdi-weather-snowy-rainy
+      "\U000F0599", # mdi-weather-sunny
+      "\U000F0F37", # mdi-weather-sunny-alert
+      "\U000F14E4", # mdi-weather-sunny-off
+      "\U000F059A", # mdi-weather-sunset
+      "\U000F059B", # mdi-weather-sunset-down
+      "\U000F059C", # mdi-weather-sunset-up
+      "\U000F0F38", # mdi-weather-tornado
+      "\U000F059D", # mdi-weather-windy
+      "\U000F059E", # mdi-weather-windy-variant
+    ]
