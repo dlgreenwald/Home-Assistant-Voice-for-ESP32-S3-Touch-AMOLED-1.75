@@ -1,0 +1,128 @@
+substitutions:
+    zoom_level: 7
+
+http_request:
+
+interval:
+  - interval: 10min
+    startup_delay: 30s
+    then:
+        - http_request.get:
+            url: https://api.rainviewer.com/public/weather-maps.json
+            capture_response: true
+            on_error:
+                - logger.log: Error Fetching radar index
+            on_response:
+                - then:
+                    - if:
+                        condition:
+                            lambda: return response->status_code == 200;
+                        then:
+                            - logger.log: radar index fetched successfully
+                            - lambda: |-
+                                int zoom = 7;
+                                double n = pow(2.0, zoom);
+                                // Calculate tile x coordinate
+                                int x_tile = floor((id(longitude).state + 180.0) / 360.0 * n);
+
+                                double lat_rad = id(latitude).state * (3.14159 / 180.0); // Convert latitude to radians
+                                // Calculate tile y coordinate
+                                int y_tile = floor((1.0 - log(tan(lat_rad) + 1.0 / cos(lat_rad)) / 3.14159) / 2.0 * n);
+
+                                char radar_end_string[200];
+                                sprintf(radar_end_string, "/512/%i/%i/%i/2/1_1.png", zoom, x_tile, y_tile);
+
+                                char map_url_string[200];
+                                sprintf(map_url_string, "https://tile.openstreetmap.org/%i/%i/%i.png", zoom, x_tile, y_tile);
+                                ESP_LOGI("radar", map_url_string);
+                                id(img_map).set_url(map_url_string);
+
+
+                                JsonDocument filter;
+                                filter["radar"]["past"][0]["path"] = true;
+
+                                JsonDocument doc;
+                                deserializeJson(doc, body, DeserializationOption::Filter(filter) );
+                                ESP_LOGI("radar", doc.as<std::string>().c_str());
+
+                                std::string timestamp = doc["radar"]["past"][0]["path"].as<std::string>();
+
+                                char buf[200];
+                                sprintf(buf, "https://tilecache.rainviewer.com%s%s", timestamp.c_str(), radar_end_string);
+
+                                id(img_radar).set_url(buf); 
+                            - component.update: img_radar
+                            - component.update: img_map
+                        else:
+                            - logger.log:
+                                format: "Error: Response status: %d, message %s"
+                                args: [ 'response->status_code', 'body.c_str()' ]
+
+image:
+  - file: "radar.png"
+    type: rgb565 
+    id: placeholder
+    resize: 466x466
+
+online_image:
+  - url: https://esphome.io/components/lvgl/images/lvgl_image.png
+    format: png
+    id: img_radar
+    type: rgb565
+    resize: 466x466
+    placeholder: placeholder
+    transparency: alpha_channel
+    update_interval: 10min
+    on_download_finished:
+        - lvgl.image.update: 
+            id: img_radar_id
+            src: img_radar
+
+  - url: https://tile.openstreetmap.org/4/4/6.png
+    format: png
+    id: img_map
+    type: rgb565
+    resize: 466x466
+    placeholder: placeholder
+    update_interval: 24h
+    on_download_finished:
+        - lvgl.image.update: 
+            id: img_map_id
+            src: img_map
+
+lvgl:
+  pages:
+    - id: radar_page
+      on_swipe_right:
+        - lvgl.page.next:
+      on_swipe_left:
+        - lvgl.page.previous:
+      widgets:
+        - image:
+            align: CENTER
+            src: placeholder
+            id: img_map_id
+        - image: 
+            align: CENTER
+            src: placeholder
+            id: img_radar_id
+
+text_sensor:
+    - platform: template
+      id: radar_url
+      internal: True
+    - platform: template
+      id: radar_end
+      internal: True
+
+
+sensor:
+  - platform: homeassistant
+    id: latitude
+    entity_id: zone.home
+    attribute: latitude      
+
+  - platform: homeassistant
+    id: longitude
+    entity_id: zone.home
+    attribute: longitude

@@ -22,6 +22,8 @@
 # * Idle Screens
 #   * Clock
 #   * Weather Forcast
+#   * Current Weather
+#   * Radar
 # * Anouncement, and VA State Screens
 # * Media Player
 #     * Not Sendspin, due to the media player library and voice assistant not playing nicely together
@@ -30,13 +32,10 @@
 # * Idle Screen rotation
 # * Sendspin
 # * Idle Screens
-#   * Current Weather
+#   
 #   * Thermostat Control
 
 #TODO
-# Clock
-# *  larger text on date in clock
-#
 # General
 # * Figgure out how to stay on loading screen until clock has painted after the time has updated at least once.
 # * Same for weather
@@ -56,6 +55,8 @@ packages:
   lvgl_voiceassistant: !include widgets/voiceassistant.yaml
   lvgl_clock: !include widgets/clock.yaml
   lvgl_weather: !include widgets/weather.yaml
+  lvgl_radar: !include widgets/radar.yaml
+#  lvgl_photoprism: !include widgets/photoprism.yaml
 
 substitutions:
   name: "waveshare-s3-amoled-175"
