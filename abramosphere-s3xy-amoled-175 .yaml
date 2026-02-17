@@ -229,6 +229,14 @@ interval:
                 level: info
             - script.execute: draw_display
             - lambda: id(previous_phase) = id(voice_assistant_phase);
+  - interval: 60s
+    then:
+      - if:
+          condition:
+            lvgl.is_idle:
+              timeout: 60s
+          then:
+            lvgl.page.next:
 
 # ·······························································
 # :   ____                                                      :
