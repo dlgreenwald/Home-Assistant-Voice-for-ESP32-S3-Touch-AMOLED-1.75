@@ -56,7 +56,7 @@ packages:
   lvgl_clock: !include widgets/clock.yaml
   lvgl_weather: !include widgets/weather.yaml
   lvgl_radar: !include widgets/radar.yaml
-#  lvgl_photoprism: !include widgets/photoprism.yaml
+  lvgl_photoprism: !include widgets/photoprism.yaml
 
 substitutions:
   name: "waveshare-s3-amoled-175"

@@ -1,0 +1,96 @@
+substitutions:
+    photoproxy_domain: !secret photoproxy_domain
+    photoprism_secret: !secret photoprism_secret
+
+
+online_image:
+  - url: https://esphome.io/components/lvgl/images/lvgl_image.png
+    format: png
+    id: current_photo_img
+    type: rgb565 
+    on_download_finished:
+        - logger.log: Current photo downloaded
+        - lvgl.image.update:
+            id: photo_img_id
+            src: current_photo_img
+
+http_request:
+
+interval:
+  - interval: 2min
+    startup_delay: 30s
+    then:
+        - http_request.get:
+            url: https://${photoprism_domain}/api/v1/photos?count=1&quality=3&merged=true&order=random&public=true
+            request_headers:
+                X-Auth-Token: !secret photoprism_key
+            capture_response: true
+            max_response_buffer_size: 2k
+            on_error:
+                - logger.log: Error Fetching photoprism index
+            on_response:
+                - then:
+                    - if:
+                        condition:
+                            lambda: return response->status_code == 200;
+                        then:
+                            - logger.log: photoprism index fetched successfully
+                            - lambda: |-
+                                JsonDocument filter;
+                                filter[0]["PlaceID"] = true;
+                                filter[0]["PlaceCity"] = true;
+                                filter[0]["FileUID"] = true;
+                                filter[0]["Hash"] = true;
+
+                                JsonDocument doc;
+                                deserializeJson(doc, body, DeserializationOption::Filter(filter) );
+                                ESP_LOGI("photo", doc.as<std::string>().c_str());
+                                std::string hash = doc.as<JsonArray>()[0]["Hash"].as<std::string>();
+                                std::string format = "https://${photoproxy_domain}/transform?image_url=https%%3A%%2F%%2F${photoprism_domain}%%2Fapi%%2Fv1%%2Ft%%2F%s%%2F${photoprism_secret}%%2Ftile_500&width=466&height=466&format=png";
+
+                                int size_s = std::snprintf( nullptr, 0, format.c_str(), hash.c_str() ) + 1; // Extra space for '\0'
+                                if( size_s <= 0 ){ return; }
+                                auto size = static_cast<size_t>( size_s );
+                                std::unique_ptr<char[]> buf( new char[ size ] );
+                                std::snprintf( buf.get(), size, format.c_str(), hash.c_str() );
+                                std::string url = std::string( buf.get(), buf.get() + size - 1 );
+
+                                std::string auth_header = "HMAC 43%eMr8z1gJQdro5UNX%m03uQOf!B$61";
+
+                                auto *img = id(current_photo_img);
+                                img->set_url(url);
+                                img->update();          
+                            # - component.update: current_photo_img
+                        else:
+                            - logger.log:
+                                format: "Error: Response status: %d, message %s"
+                                args: [ 'response->status_code', 'body.c_str()' ]
+
+image:
+  - file: "photos.png"
+    type: rgb565 
+    id: photo_placeholder
+    resize: 466x466
+
+lvgl:
+  pages:
+    - id: photoprism_page
+      bg_color: BLACK
+      on_swipe_right:
+        - lvgl.page.next:
+      on_swipe_left:
+        - lvgl.page.previous:
+      widgets:
+        - image:
+            align: CENTER
+            src: photo_placeholder
+            id: photo_img_id
+
+globals:
+  - id: photo_url
+    type: std::string
+    initial_value: '""'
+
+  - id: photo_hmac
+    type: std::string
+    initial_value: '""'
