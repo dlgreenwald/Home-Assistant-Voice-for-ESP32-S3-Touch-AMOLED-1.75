@@ -1,5 +1,6 @@
 substitutions:
     photoproxy_domain: !secret photoproxy_domain
+    photoprism_domain: !secret photoprism_domain
     photoprism_secret: !secret photoprism_secret
 
 
