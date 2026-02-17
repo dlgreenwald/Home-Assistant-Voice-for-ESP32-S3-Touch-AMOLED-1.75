@@ -27,10 +27,16 @@ api:
             tzset();
             id(saved_time_zone) = posix_time_zone;
             id(publish_current_time).execute();
-  on_client_connected:
-    - lambda: id(voice_assistant_phase) = ${voice_assist_noVA_phase_id};
+  # on_client_connected:
+  #   - lambda: id(voice_assistant_phase) = ${voice_assist_noVA_phase_id};
   on_client_disconnected:
-    - lambda: id(voice_assistant_phase) = ${voice_assist_noHA_phase_id};
+    - if:
+        condition:
+          not: 
+            api.connected:
+              state_subscription_only: true
+        then: 
+          lambda: id(voice_assistant_phase) = ${voice_assist_noHA_phase_id};
 
 # Time sync from Home Assistant
 time:
