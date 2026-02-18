@@ -127,12 +127,13 @@ esp32:
   framework:
     type: esp-idf
     version: recommended
+    advanced:
+      compiler_optimization: perf
+      execute_from_psram: True
     sdkconfig_options:
       CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
       CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
-
-      CONFIG_COMPILER_OPTIMIZATION: "Performance"
 
       # Moves instructions and read only data from flash into PSRAM on boot.
       # Both enabled allows instructions to execute while a flash operation is in progress without needing to be placed in IRAM.
@@ -149,6 +150,7 @@ esp32:
 psram:
   mode: octal
   speed: 80MHz
+  ignore_not_found: false
 
 api:
   encryption:
