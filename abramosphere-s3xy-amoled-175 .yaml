@@ -90,6 +90,9 @@ esphome:
   on_boot:
     - priority: 600
       then:
+        - lambda: |-
+            uint8_t data[2] = {0x44, 0x48};  // ADCDAT_SEL = DACL+ADC
+            id(bus_a).write(0x18, data, 2);
         - switch.turn_on: amp_enable  # Enable audio amplifier on boot
         - delay: 500ms  # Increased delay for amp stabilization
         - sensor.template.publish:
@@ -134,6 +137,7 @@ esp32:
       CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
       CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_FREERTOS_HZ: "1000"
 
       # Moves instructions and read only data from flash into PSRAM on boot.
       # Both enabled allows instructions to execute while a flash operation is in progress without needing to be placed in IRAM.
@@ -156,15 +160,30 @@ api:
   encryption:
     key: !secret amoled_key
 
+debug:
+  update_interval: 1min
+
 logger:
   level: DEBUG
-  # initial_level: WARN
-  # logs:
-  #   micro_wake_word: DEBUG
-  #   media_player: DEBUG
-  #   microphone: DEBUG
-  #   speaker: DEBUG
-  #   voice_assistant: DEBUG
+  logs:
+    intercom_api: INFO
+    i2s_duplex: DEBUG
+    micro_wake_word: DEBUG
+    voice_assistant: DEBUG
+    component: INFO
+    wifi: INFO
+    api: INFO
+    ota: INFO
+    mdns: INFO
+    sensor: INFO
+    switch: INFO
+    light: INFO
+    display: INFO
+    image: INFO
+    animation: INFO
+    spi: INFO
+    i2c: INFO
+    esp32: INFO
 #  hardware_uart: uart0  #Uncomment to see serial logs via USB connection. Comment out after debufgging - this line introduces noise on speaker...
 
 # ······················································
@@ -181,15 +200,28 @@ i2c:
   - id: bus_a
     scl: GPIO14
     sda: GPIO15
-    scan: false
+    scan: true
 
-i2s_audio:
-  - id: i2s_audio_bus
-    i2s_lrclk_pin: 
-      number: GPIO45
-      ignore_strapping_warning: true
-    i2s_bclk_pin: GPIO9
-    i2s_mclk_pin: GPIO42
+esp_aec:
+  id: aec_component
+  sample_rate: 16000
+  filter_length: 4     # 64ms echo tail (sufficient for integrated codec)
+  mode: voip_low_cost   # Lightest mode, same quality as high_perf on ESP32-S3
+
+i2s_audio_duplex:
+  id: i2s_duplex
+  i2s_lrclk_pin: GPIO45
+  i2s_bclk_pin: GPIO9
+  i2s_mclk_pin: GPIO42
+  i2s_din_pin: GPIO10
+  i2s_dout_pin: GPIO8
+  sample_rate: 16000
+  # aec_id: aec_component
+  # ES8311 digital feedback: RX is stereo L=DAC(reference), R=ADC(mic).
+  # Sample-accurate reference alignment, no ring buffer delay needed.
+  # Requires ES8311 register 0x44 bits[6:4]=4 (configured in on_boot via I2C).
+  use_stereo_aec_reference: true
+  aec_reference_delay_ms: 10   # Minimal (sample-aligned via stereo feedback)
 
 audio_dac:
   - platform: es8311

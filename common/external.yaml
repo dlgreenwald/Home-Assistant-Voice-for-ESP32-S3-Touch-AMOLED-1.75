@@ -22,3 +22,10 @@ external_components:
       ref: dev  # this is commit 9148832
     components: [micro_wake_word]
     refresh: 24h
+
+  - source:
+      type: git
+      url: https://github.com/n-IA-hane/intercom-api
+      path: esphome_components/
+    components: [intercom_api, i2s_audio_duplex, esp_aec]
+    refresh: 24h

@@ -47,20 +47,18 @@ substitutions:
   error_no_wifi_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/error_box_illustrations/error-no-wifi.png
   error_no_ha_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/error_box_illustrations/error-no-ha.png
 
-
 microphone:
-  - platform: i2s_audio
-    id: box_mic
-    i2s_audio_id: i2s_audio_bus
-    sample_rate: 16000
-    i2s_din_pin: GPIO10
-    bits_per_sample: 16bit
-    adc_type: external
-    pdm: false  # Ensure we're using standard I2S, not PDM
-    use_apll: false  # Disable APLL to reduce I2S conflicts
+  - platform: i2s_audio_duplex
+    id: mic_aec
+    i2s_audio_duplex_id: i2s_duplex
+  - platform: i2s_audio_duplex
+    id: mic_raw
+    i2s_audio_duplex_id: i2s_duplex
+    pre_aec: true
 
 micro_wake_word:
   id: mww
+  microphone: mic_raw
   models:
     - okay_nabu
   on_wake_word_detected:
@@ -76,7 +74,7 @@ micro_wake_word:
 
 voice_assistant:
   id: va
-  microphone: box_mic
+  microphone: mic_aec
   media_player: external_media_player
   micro_wake_word: mww
   noise_suppression_level: 2
