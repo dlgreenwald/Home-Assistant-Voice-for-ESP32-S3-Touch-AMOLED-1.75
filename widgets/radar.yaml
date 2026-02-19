@@ -20,24 +20,22 @@ interval:
                         then:
                             - logger.log: radar index fetched successfully
                             - lambda: |-
-                                int zoom = 7;
-                                double n = pow(2.0, zoom);
+                                double n = pow(2.0, id(zoom));
                                 // Calculate tile x coordinate
-                                int x_tile = floor((id(longitude).state + 180.0) / 360.0 * n);
+                                id(tile_x) = floor((id(longitude).state + 180.0) / 360.0 * n);
 
                                 double lat_rad = id(latitude).state * (3.14159 / 180.0); // Convert latitude to radians
                                 // Calculate tile y coordinate
-                                int y_tile = floor((1.0 - log(tan(lat_rad) + 1.0 / cos(lat_rad)) / 3.14159) / 2.0 * n);
+                                id(tile_y) = floor((1.0 - log(tan(lat_rad) + 1.0 / cos(lat_rad)) / 3.14159) / 2.0 * n);
 
-                                char radar_end_string[200];
-                                sprintf(radar_end_string, "/512/%i/%i/%i/2/1_1.png", zoom, x_tile, y_tile);
-
+                            - lambda: |-
                                 char map_url_string[200];
-                                sprintf(map_url_string, "https://tile.openstreetmap.org/%i/%i/%i.png", zoom, x_tile, y_tile);
+                                sprintf(map_url_string, "https://tile.openstreetmap.org/%i/%i/%i.png", id(zoom), id(tile_x), id(tile_y));
                                 ESP_LOGI("radar", map_url_string);
                                 id(img_map).set_url(map_url_string);
-
-
+                            - component.update: img_map
+                            - delay: 2s
+                            - lambda: |-
                                 JsonDocument filter;
                                 filter["radar"]["past"][0]["path"] = true;
 
@@ -48,11 +46,11 @@ interval:
                                 std::string timestamp = doc["radar"]["past"][0]["path"].as<std::string>();
 
                                 char buf[200];
-                                sprintf(buf, "https://tilecache.rainviewer.com%s%s", timestamp.c_str(), radar_end_string);
+                                sprintf(buf, "https://tilecache.rainviewer.com%s/512/%i/%i/%i/2/1_1.png", timestamp.c_str(), id(zoom), id(tile_x), id(tile_y) );
 
                                 id(img_radar).set_url(buf); 
                             - component.update: img_radar
-                            - component.update: img_map
+                            
                         else:
                             - logger.log:
                                 format: "Error: Response status: %d, message %s"
@@ -64,6 +62,15 @@ image:
     id: placeholder
     resize: 466x466
 
+globals:
+  - id: tile_x
+    type: int
+  - id: tile_y
+    type: int
+  - id: zoom
+    type: int
+    initial_value: "7"
+
 online_image:
   - url: https://esphome.io/components/lvgl/images/lvgl_image.png
     format: png
@@ -72,11 +79,11 @@ online_image:
     resize: 466x466
     placeholder: placeholder
     transparency: alpha_channel
-    update_interval: 10min
     on_download_finished:
         - lvgl.image.update: 
             id: img_radar_id
             src: img_radar
+        - online_image.release: img_radar
 
   - url: https://tile.openstreetmap.org/4/4/6.png
     format: png
@@ -84,11 +91,11 @@ online_image:
     type: rgb565
     resize: 466x466
     placeholder: placeholder
-    update_interval: 24h
     on_download_finished:
         - lvgl.image.update: 
             id: img_map_id
             src: img_map
+        - online_image.release: img_map
 
 lvgl:
   pages:

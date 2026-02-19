@@ -14,6 +14,7 @@ online_image:
         - lvgl.image.update:
             id: photo_img_id
             src: current_photo_img
+        - online_image.release: current_photo_img
 
 http_request:
 
@@ -55,8 +56,6 @@ interval:
                                 std::unique_ptr<char[]> buf( new char[ size ] );
                                 std::snprintf( buf.get(), size, format.c_str(), hash.c_str() );
                                 std::string url = std::string( buf.get(), buf.get() + size - 1 );
-
-                                std::string auth_header = "HMAC 43%eMr8z1gJQdro5UNX%m03uQOf!B$61";
 
                                 auto *img = id(current_photo_img);
                                 img->set_url(url);
