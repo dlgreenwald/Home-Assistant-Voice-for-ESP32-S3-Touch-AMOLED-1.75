@@ -9,6 +9,8 @@
 # :                                                                     :
 # ·······································································
 substitutions:
+  jack_connected_sound_file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/jack_connected.flac
+  jack_disconnected_sound_file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/jack_disconnected.flac
   mute_switch_on_sound_file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/mute_switch_on.flac
   mute_switch_off_sound_file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/mute_switch_off.flac
   timer_finished_sound_file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/timer_finished.flac
@@ -20,26 +22,77 @@ substitutions:
   factory_reset_initiated_sound_file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/factory_reset_initiated.mp3
   factory_reset_cancelled_sound_file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/factory_reset_cancelled.mp3
   factory_reset_confirmed_sound_file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/factory_reset_confirmed.mp3
+  easter_egg_tick_sound_file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/easter_egg_tick.mp3
+  easter_egg_tada_sound_file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/easter_egg_tada.mp3
   error_cloud_expired_sound_file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/error_cloud_expired.mp3
 
+sendspin:
+  id: sendspin_hub
+  task_stack_in_psram: true
+  kalman_process_error: 0.01
+
+media_source:
+  - platform: sendspin
+    id: sendspin_source
+  - platform: http_request
+    id: http_source
+    buffer_size: 500000
+  - platform: file
+    id: file_source
+    files:
+      - id: center_button_press_sound
+        file: ${center_button_press_sound_file}
+      - id: center_button_double_press_sound
+        file: ${center_button_double_press_sound_file}
+      - id: center_button_triple_press_sound
+        file: ${center_button_triple_press_sound_file}
+      - id: center_button_long_press_sound
+        file: ${center_button_long_press_sound_file}
+      - id: factory_reset_initiated_sound
+        file: ${factory_reset_initiated_sound_file}
+      - id: factory_reset_cancelled_sound
+        file: ${factory_reset_cancelled_sound_file}
+      - id: factory_reset_confirmed_sound
+        file: ${factory_reset_confirmed_sound_file}
+      - id: jack_connected_sound
+        file: ${jack_connected_sound_file}
+      - id: jack_disconnected_sound
+        file: ${jack_disconnected_sound_file}
+      - id: mute_switch_on_sound
+        file: ${mute_switch_on_sound_file}
+      - id: mute_switch_off_sound
+        file: ${mute_switch_off_sound_file}
+      - id: timer_finished_sound
+        file: ${timer_finished_sound_file}
+      - id: wake_word_triggered_sound
+        file: ${wake_word_triggered_sound_file}
+      - id: easter_egg_tick_sound
+        file: ${easter_egg_tick_sound_file}
+      - id: easter_egg_tada_sound
+        file: ${easter_egg_tada_sound_file}
+      - id: error_cloud_expired
+        file: ${error_cloud_expired_sound_file}
 
 media_player:
-  - platform: speaker
-    name: None
+  - platform: sendspin
+    id: sendspin_group_media_player
+  - platform: speaker_source
+    name: Media Player
     id: external_media_player
+    announcement_speaker: announcement_box_speaker
+    media_speaker: media_box_speaker
     announcement_pipeline:
-      speaker: announcement_box_speaker
       format: FLAC
       sample_rate: 16000
       num_channels: 1
     media_pipeline:
-      speaker: media_box_speaker
       format: FLAC     # FLAC is the least processor intensive codec
       num_channels: 2
       sample_rate: 48000
-    files:
-      - id: wake_word_triggered_sound
-        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/wake_word_triggered.flac
+    sources:
+      - file_source
+      - http_source
+      - sendspin_source
     # on_announcement:
     #   - delay: 100ms  # Give I2S bus time to stabilize
     #   - if:
@@ -67,6 +120,7 @@ speaker:
   - platform: i2s_audio_duplex
     id: box_speaker
     i2s_audio_duplex_id: i2s_duplex
+    sample_rate: 16000
 
   # Virtual speakers to resample each pipelines' audio, if necessary, as the mixer speaker requires the same sample rate
   - platform: resampler
@@ -110,11 +164,10 @@ script:
 # :  |____/ \___|_|  |_| .__/ \__|         |_|   |_|\__,_|\__, |___|____/ \___/ \__,_|_| |_|\__,_|  :
 # :                    |_|                                |___/_____|                               :
 # ···································································································
-# Script executed when we want to play sounds on the device.
+    # Script executed when we want to play sounds on the device.
   - id: play_sound
     parameters:
       priority: bool
-      # sound_file: "audio::AudioFile*"
       sound_file: string
     then:
       - if:

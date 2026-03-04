@@ -81,7 +81,7 @@ substitutions:
 esphome:
   name: "${name}"
   friendly_name: "${friendly_name}"
-  min_version: 2025.5.1
+  min_version: 2026.2.0
   #name_add_mac_suffix: true
   platformio_options:
     board_build.flash_mode: dio
@@ -91,10 +91,11 @@ esphome:
     - priority: 600
       then:
         - lambda: |-
+            // Configure ES8311 register 0x44: output DAC+ADC on stereo ASDOUT
             uint8_t data[2] = {0x44, 0x48};  // ADCDAT_SEL = DACL+ADC
             id(bus_a).write(0x18, data, 2);
-        - switch.turn_on: amp_enable  # Enable audio amplifier on boot
-        - delay: 500ms  # Increased delay for amp stabilization
+        #- switch.turn_on: amp_enable  # Enable audio amplifier on boot
+        #- delay: 500ms  # Increased delay for amp stabilization
         - sensor.template.publish:
             id: next_timer
             state: -1
@@ -733,26 +734,22 @@ script:
   - id: fetch_first_active_timer
     then:
       - lambda: |
-          const auto timers = id(va).get_timers();
-          if (timers.empty()) return;
-          auto output_timer = timers.begin()->second;
-          for (auto &iterable_timer : timers) {
-            if (iterable_timer.second.is_active && iterable_timer.second.seconds_left <= output_timer.seconds_left) {
-              output_timer = iterable_timer.second;
+          const auto &timers = id(va).get_timers();
+          auto output_timer = *timers.begin();
+          for (const auto &timer : timers) {
+            if (timer.is_active && timer.seconds_left <= output_timer.seconds_left) {
+              output_timer = timer;
             }
           }
-          id(global_first_active_timer) = output_timer;
-
+          id(first_active_timer) = output_timer;
   - id: check_if_timers_active
     then:
       - lambda: |
-          const auto timers = id(va).get_timers();
+          const auto &timers = id(va).get_timers();
           bool output = false;
-          if (timers.size() > 0) {
-            for (auto &iterable_timer : timers) {
-              if(iterable_timer.second.is_active) {
-                output = true;
-              }
+          for (const auto &timer : timers) {
+            if (timer.is_active) {
+              output = true;
             }
           }
-          id(global_is_timer_active) = output;
+          id(is_timer_active) = output;

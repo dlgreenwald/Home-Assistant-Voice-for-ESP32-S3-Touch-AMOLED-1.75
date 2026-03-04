@@ -36,16 +36,16 @@ substitutions:
   # The voice assistant encountered an error
   voice_assist_error_phase_id: '11'
 
-  loading_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/loading_320_240.png
-  idle_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/idle_320_240.png
-  listening_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/listening_320_240.png
-  thinking_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/thinking_320_240.png
-  replying_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/replying_320_240.png
-  timer_finished_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/timer_finished_320_240.png
-  mute_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/error_320_240.png
-  error_illustration_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/casita/error_320_240.png
-  error_no_wifi_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/error_box_illustrations/error-no-wifi.png
-  error_no_ha_file: https://github.com/esphome/wake-word-voice-assistants/raw/main/error_box_illustrations/error-no-ha.png
+  loading_illustration_file: common/images/loading_320_240.png
+  idle_illustration_file: common/images/idle_320_240.png
+  listening_illustration_file: common/images/listening_320_240.png
+  thinking_illustration_file: common/images/thinking_320_240.png
+  replying_illustration_file: common/images/replying_320_240.png
+  timer_finished_illustration_file: common/images/timer_finished_320_240.png
+  mute_illustration_file: common/images/error_320_240.png
+  error_illustration_file: common/images/error_320_240.png
+  error_no_wifi_file: common/images/error-no-wifi.png
+  error_no_ha_file: common/images/error-no-ha.png
 
 microphone:
   - platform: i2s_audio_duplex
@@ -60,14 +60,16 @@ micro_wake_word:
   id: mww
   microphone: mic_raw
   models:
-    - okay_nabu
+    - model: github://esphome/micro-wake-word-models/models/v2/okay_nabu.json
   on_wake_word_detected:
     - if:
         condition:
           switch.is_on: wake_sound
         then:
-          - media_player.speaker.play_on_device_media_file:
-              media_file: wake_word_triggered_sound
+          - script.execute:
+              id: play_sound
+              priority: true
+              sound_file: "wake_word_triggered_sound"
           - delay: 300ms
     - voice_assistant.start:
         wake_word: !lambda return wake_word;
